@@ -1,0 +1,6 @@
+
+.DS_Store
+
+ansible/inventory
+ansible/inventory.local
+output

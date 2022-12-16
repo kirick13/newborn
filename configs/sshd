@@ -1,0 +1,15 @@
+
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
+
+# The strategy used for options in the default sshd_config shipped with
+# OpenSSH is to specify options with their default value where
+# possible, but leave them commented.  Uncommented options override the
+# default value.
+
+Port 22
+PasswordAuthentication no
+UsePAM no
+PermitRootLogin no
+
+Subsystem sftp /usr/lib/openssh/sftp-server
