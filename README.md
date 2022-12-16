@@ -21,13 +21,13 @@ Init your newly created Ubuntu webservers in a minutes.
 
 ## Usage
 
-### Step 1: Clone this repository.
+### Step 1: Clone this repository
 
 ```
 git clone https://github.com/kirick13/newborn.git
 ```
 
-### Step 2: build docker image.
+### Step 2: Build docker image
 
 ```
 docker build -t newborn .
@@ -79,3 +79,4 @@ There are some options you can pass to the script itself:
 ## TODO:
 
 - Connect to servers via root's SSH key.
+- Support different distros.
