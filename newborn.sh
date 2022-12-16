@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
-		--user)
+		-u|--user)
 			NEW_USER_NAME=$2
 			shift
 			shift

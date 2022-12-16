@@ -67,14 +67,14 @@ It's important to mount following directories to the container:
 
 There are some options you can pass to the script itself:
 
-| Option        | Description |
-| -             | - |
-| `--name`      | Server name if you don't want to name them differently using `newborn_server_name` option. |
-| `--user`      | Create a new user with this name. |
+| Option | Description |
+| - | - |
+| `-n`, `--name` | Server name if you don't want to specify server names individually using `newborn_server_name` option. |
+| `-u`, `--user` | Create a new user with this name. |
 | `--user-sudo` | Add the user to sudoers. |
-| `--docker`    | Install Docker. |
-| `--podman`    | Install Podman. |
-| `--compose`   | Install Compose for Docker or Podman. |
+| `--docker` | Install Docker. |
+| `--podman` | Install Podman. |
+| `--compose` | Install Compose for Docker or Podman. |
 
 ## TODO:
 
