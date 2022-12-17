@@ -1,0 +1,182 @@
+---
+
+- hosts: all
+  tasks:
+
+  # Variables from facts gathering such as "ansible_machine", "ansible_architecture" or "ansible_userspace_architecture" are wrong about "amd64" architecture, they state that this is an "x86_64"
+  - name: Get architecture of target node
+    shell: dpkg --print-architecture
+    register: newborn_arch
+
+  - name: Set password for root
+    user:
+      name: root
+      password: "{{ newborn_user_password | password_hash('sha512', newborn_user_password_salt) }}"
+
+  - name: Set hostname
+    hostname:
+      name: ubuntu
+      use: systemd
+
+  - name: Resize filesystem
+    shell: |
+      DISK_LABEL=$(df | grep -E '\/$' | awk '{print $1}')
+      resize2fs $DISK_LABEL
+      df -h | grep $DISK_LABEL
+      unset DISK_LABEL
+
+  - name: Set UTC timezone
+    shell: |
+      ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
+      dpkg-reconfigure --frontend noninteractive tzdata
+
+  - name: Update system
+    apt:
+      update_cache: true
+      upgrade: dist
+      autoremove: true
+
+  - name: Install packages
+    apt:
+      name:
+        - curl
+        - python3
+        - iptables-persistent
+        - vim
+
+  - name: Copy .bashrc file
+    copy:
+      src: ../configs/bash
+      dest: /etc/bash.bashrc
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Delete root-related .bashrc file
+    file:
+      path: /root/.bashrc
+      state: absent
+
+  - name: Set server name to .bashrc file
+    lineinfile:
+      path: /etc/bash.bashrc
+      regexp: '^MYHOSTNAME=""$'
+      line: 'MYHOSTNAME="{{ newborn_server_name or newborn_server_name_global }}"'
+
+  - name: Add Docker apt repository key
+    get_url:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      dest: /etc/apt/trusted.gpg.d/docker.asc
+      mode: '0644'
+    when: newborn_oci_platform == "docker"
+
+  - name: Add Docker repository
+    apt_repository:
+      repo:  "deb [arch={{ newborn_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      update_cache: yes
+    when: newborn_oci_platform == "docker"
+
+  - name: Install Docker
+    apt:
+      name: docker-ce
+    when: newborn_oci_platform == "docker"
+
+  - name: Copy Docker daemon logging config file
+    copy:
+      src: ../configs/docker-daemon.json
+      dest: /etc/docker/daemon.json
+      owner: root
+      group: root
+      mode: '0644'
+    when: newborn_oci_platform == "docker"
+
+  - name: Restart Docker daemon
+    service:
+      name: docker
+      state: restarted
+    when: newborn_oci_platform == "docker"
+
+  - name: Create Docker plugins directory
+    file:
+      path: /usr/local/lib/docker/cli-plugins
+      state: directory
+    when: newborn_oci_platform == "docker" and newborn_oci_compose == "y"
+
+  - name: Install Docker Compose
+    get_url:
+      url: "https://github.com/docker/compose/releases/download/v2.12.0/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+      dest: /usr/local/lib/docker/cli-plugins/docker-compose
+      mode: '0755'
+    when: newborn_oci_platform == "docker" and newborn_oci_compose == "y"
+
+  - name: Install Podman
+    apt:
+      name: podman
+    when: newborn_oci_platform == "podman"
+
+  - name: Install Pip3
+    apt:
+      name: python3-pip
+    when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
+
+  - name: Install Podman Compose
+    pip:
+      name: podman-compose
+    when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
+
+  - name: Create user "{{ newborn_user_name }}"
+    user:
+      name: "{{ newborn_user_name }}"
+      password: "{{ newborn_user_password | password_hash('sha512', newborn_user_password_salt) }}"
+      shell: /bin/bash
+
+  - name: Add user "{{ newborn_user_name }}" to group "sudo"
+    user:
+      name: "{{ newborn_user_name }}"
+      groups: sudo
+      append: true
+    when: newborn_user_sudo == "y"
+
+  - name: Add user "{{ newborn_user_name }}" to group "docker"
+    user:
+      name: "{{ newborn_user_name }}"
+      groups: docker
+      append: true
+    when: newborn_oci_platform == "docker"
+
+  - name: Remove .bashrc file related to user "{{ newborn_user_name }}"
+    file:
+      path: "/home/{{ newborn_user_name }}/.bashrc"
+      state: absent
+
+  - name: Create .ssh directory for user "{{ newborn_user_name }}"
+    file:
+      path: "/home/{{ newborn_user_name }}/.ssh"
+      state: directory
+      owner: "{{ newborn_user_name }}"
+      group: "{{ newborn_user_name }}"
+
+  - name: Add SSH key for user "{{ newborn_user_name }}"
+    copy:
+      src: /data/newborn/ssh.public.key
+      dest: "/home/{{ newborn_user_name }}/.ssh/authorized_keys"
+      owner: "{{ newborn_user_name }}"
+      group: "{{ newborn_user_name }}"
+      mode: '0644'
+
+  - name: Set OpenSSH server config
+    copy:
+      src: ../configs/sshd
+      dest: /etc/ssh/sshd_config
+      mode: '0644'
+
+  - name: Set SSH port to .bashrc file
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^Port 22$'
+      line: "Port {{ newborn_ssh_port }}"
+
+  - name: Restart OpenSSH server
+    service:
+      name: sshd
+      state: restarted

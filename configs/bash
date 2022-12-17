@@ -1,0 +1,29 @@
+
+# System-wide .bashrc file for interactive bash(1) shells.
+
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# don't put duplicate lines in the history. See bash(1) for more options
+export HISTCONTROL=ignoreboth:erasedups
+# append to the history file, don't overwrite it
+shopt -s histappend
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+export HISTSIZE=1000
+export HISTFILESIZE=2000
+history -n
+history -w
+history -c
+history -r
+
+MYHOSTNAME=""
+
+# set a fancy prompt
+if [ $(id -u) -eq 0 ]; then
+	# root
+	PS1="[$(tput setab 1)$(tput setaf 7)$(tput bold)root$(tput sgr0)@$MYHOSTNAME:\w] # "
+else
+	PS1="[$(tput setaf 2)\u$(tput sgr0)@$MYHOSTNAME:\w] $ "
+fi
+
+unset MYHOSTNAME
