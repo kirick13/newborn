@@ -61,7 +61,15 @@
     lineinfile:
       path: /etc/bash.bashrc
       regexp: '^MYHOSTNAME=""$'
-      line: 'MYHOSTNAME="{{ newborn_server_name or newborn_server_name_global }}"'
+      line: 'MYHOSTNAME="{{ newborn_server_name }}"'
+    when: newborn_server_name is defined
+
+  - name: Set server name to .bashrc file
+    lineinfile:
+      path: /etc/bash.bashrc
+      regexp: '^MYHOSTNAME=""$'
+      line: 'MYHOSTNAME="{{ newborn_server_name_global }}"'
+    when: newborn_server_name is not defined
 
   - name: Add Docker apt repository key
     get_url:
@@ -72,7 +80,7 @@
 
   - name: Add Docker repository
     apt_repository:
-      repo:  "deb [arch={{ newborn_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      repo: "deb [arch={{ newborn_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
       update_cache: yes
     when: newborn_oci_platform == "docker"
 
