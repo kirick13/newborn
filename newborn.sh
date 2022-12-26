@@ -1,120 +1,204 @@
-
 #!/bin/bash
 
-SERVER_NAME="server"
-NEW_USER_NAME="user"
-NEW_USER_SUDO="n"
-OCI_PLATFORM="none"
-OCI_COMPOSE="n"
-REST_ARGS=()
-
-while [[ $# -gt 0 ]]; do
-	case $1 in
-		-n|--name)
-			SERVER_NAME=$2
-			shift
-			shift
-			;;
-		-u|--user)
-			NEW_USER_NAME=$2
-			shift
-			shift
-			;;
-		--user-sudo)
-			NEW_USER_SUDO="y"
-			shift
-			;;
-		--docker)
-			OCI_PLATFORM='docker'
-			shift
-			;;
-		--podman)
-			OCI_PLATFORM='podman'
-			shift
-			;;
-		--compose)
-			OCI_COMPOSE='y'
-			shift
-			;;
-		-*|--*)
-			echo "Unknown argument $1"
-			exit 1
-			;;
-		*)
-			REST_ARGS+=("$1")
-			shift
-			;;
-	esac
-done
-
-set -- "${REST_ARGS[@]}"
-
-echo
-echo '----- [NEWBORN] -----'
-echo
-
 newborn_say () {
-	echo "[NEWBORN] $1"
+    echo "[NEWBORN] $1"
 }
 
-echo
-newborn_say "Creating directory for user's credentials..."
-mkdir -p /data/newborn > /dev/null
-newborn_say "done."
+# connection
+INVENTORY_FILE=''
+IP=''
+PASSWORD=''
+# setup
+SERVER_NAME='server'
+NEW_USER_NAME='user'
+NEW_USER_SUDO='n'
+NEW_USER_PASSWORD=''
+SSH_KEY_PATH=''
+# packages
+OCI_PLATFORM='none'
+OCI_COMPOSE='n'
+# output
+OUT_INVENTORY_PATH=''
+OUT_PRINT_PASSWORD='n'
+OUT_SSH_KEY_PATH=''
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        # connection
+        -i|--inventory)
+            INVENTORY_FILE=$2
+            shift
+            shift
+            ;;
+        --ip)
+            IP=$2
+            shift
+            shift
+            read -s -p 'Enter current password for '$IP': ' PASSWORD
+            echo
+            ;;
+        # setup
+        -n|--name)
+            SERVER_NAME=$2
+            shift
+            shift
+            ;;
+        -u|--user)
+            NEW_USER_NAME=$2
+            shift
+            shift
+            ;;
+        --user-sudo)
+            NEW_USER_SUDO='y'
+            shift
+            ;;
+        --ask-new-password)
+            read -s -p 'Enter new password for '$IP': ' NEW_USER_PASSWORD
+            echo
+            shift
+            ;;
+        -k|--ssh-key)
+            SSH_KEY_PATH=$2
+            shift
+            shift
+            ;;
+        # packages
+        --docker)
+            OCI_PLATFORM='docker'
+            shift
+            ;;
+        --podman)
+            OCI_PLATFORM='podman'
+            shift
+            ;;
+        --compose)
+            OCI_COMPOSE='y'
+            shift
+            ;;
+        # output
+        --append-inventory)
+            OUT_INVENTORY_PATH=$2
+            shift
+            shift
+            ;;
+        --print-password)
+            OUT_PRINT_PASSWORD='y'
+            shift
+            ;;
+        --copy-ssh-key)
+            OUT_SSH_KEY_PATH=$2
+            shift
+            shift
+            if [ -f "$OUT_SSH_KEY_PATH" ]; then
+                echo "Error: file $OUT_SSH_KEY_PATH already exists"
+                exit 1
+            fi
+            ;;
+        # other
+        --help)
+            echo
+            echo 'Newborn setups new server with dockerized Ansible.'
+            echo
+            echo 'Usage: ./newborn.sh [options]'
+            echo
+            echo 'Connection options:'
+            echo '  -i, --inventory <path>       Path to Ansible inventory file'
+            echo '  --ip <ip>                    IP address of the server (password will be asked)'
+            echo
+            echo 'Setup options:'
+            echo '  -n, --name <name>            Server name (will only be used in Bash prompt, default: "server")'
+            echo '  -u, --user <name>            New user name (default: "user")'
+            echo '  --user-sudo                  Add new user to sudoers'
+            echo '  --ask-new-password           Ask for new user password (otherwise random password will be generated)'
+            echo '  -k, --ssh-key <path>         Path to SSH key (otherwise new key will be generated)'
+            echo
+            echo 'Packages options:'
+            echo '  --docker                     Install Docker'
+            echo '  --podman                     Install Podman'
+            echo '  --compose                    Install Docker Compose / Podman Compose'
+            echo
+            echo 'Output options:'
+            echo '  --append-inventory <path>    Append processed hosts to Ansible inventory'
+            echo '  --print-password             Print new user password to stdout'
+            echo '  --copy-ssh-key <path>        Copy SSH key to file'
+            echo
+            exit 0
+            ;;
+        -*|--*)
+            echo "Unknown argument $1"
+            exit 1
+            ;;
+        *)
+            echo "Unknown argument $1"
+            exit 1
+            ;;
+    esac
+done
+
+rm -rf ./.run > /dev/null
+
+mkdir -p ./.run > /dev/null
+mkdir -p ./.run/input > /dev/null
+mkdir -p ./.run/output > /dev/null
+
+if [ -z "$INVENTORY_FILE" ]; then
+    if [ -z "$IP" ]; then
+        echo "Error: neither IP address nor Ansible inventory provided"
+        exit 1
+    fi
+    if [ -z "$PASSWORD" ]; then
+        echo "Error: neither password nor Ansible inventory provided. Use -p or --password"
+        exit 1
+    fi
+
+    echo "$IP ansible_ssh_pass=$PASSWORD" > .run/input/inventory
+    INVENTORY_FILE="$PWD/.run/input/inventory"
+fi
+
+if [ -z "$SSH_KEY_PATH" ]; then
+    SSH_KEY_GENERATE='y'
+    SSH_KEY_PATH='/tmp/notexists'
+    SSH_KEY_PATH_DOCKER='/tmp/notexists'
+else
+    SSH_KEY_GENERATE='n'
+    SSH_KEY_PATH_DOCKER='/app/input/ssh_key'
+fi
 
 echo
-newborn_say "Append random SSH port to every host in inventory..."
-rm /data/newborn/inventory
-cat ansible/inventory \
-	| while read line
-	do \
-		SSH_PORT=$(python3 -c 'import random; print(random.randint(1025,65535))')
-		echo ${line} | awk '{ print $1, "ansible_port='$SSH_PORT'" }' >> /data/newborn/inventory
-		echo ${line}" newborn_ssh_port=$SSH_PORT"
-	done \
-	| tee ansible/inventory.local > /dev/null
-newborn_say "done."
+
+docker build -t local/newborn .
+docker run --rm \
+           -v "$PWD/.run/output:/app/output" \
+           -v "$INVENTORY_FILE:/app/input/inventory" \
+           -v "$SSH_KEY_PATH:$SSH_KEY_PATH_DOCKER" \
+           -e "NEWBORN_SERVER_NAME=$SERVER_NAME" \
+           -e "NEWBORN_NEW_USER_NAME=$NEW_USER_NAME" \
+           -e "NEWBORN_NEW_USER_PASSWORD=$NEW_USER_PASSWORD" \
+           -e "NEWBORN_NEW_USER_SUDO=$NEW_USER_SUDO" \
+           -e "NEWBORN_OCI_PLATFORM=$OCI_PLATFORM" \
+           -e "NEWBORN_OCI_COMPOSE=$OCI_COMPOSE" \
+           local/newborn
 
 echo
-newborn_say "Creating SSH key for user \"$NEW_USER_NAME\"..."
-cd /data/newborn
-ssh-keygen -t ecdsa \
-           -m PEM \
-           -b 521 \
-           -N '' \
-           -f SSHKEY \
-           > /dev/null
-cat SSHKEY.pub | awk '{ print $1,$2 }' > ssh.public.key
-rm SSHKEY.pub
-mv SSHKEY ssh.private.key
-newborn_say "done."
-cd /app
+newborn_say 'Setup complete!'
 
-echo
-newborn_say "Creating password for user \"$NEW_USER_NAME\"..."
-NEW_USER_PASSWORD="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 100)"
-NEW_USER_PASSWORD_SALT="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 16)"
-echo $NEW_USER_PASSWORD > /data/newborn/password.txt
-newborn_say "done."
+if [ "$OUT_INVENTORY_PATH" != '' ]; then
+    cat .run/output/inventory >> $OUT_INVENTORY_PATH
+    newborn_say 'Inventory appended to '$OUT_INVENTORY_PATH
+else
+    newborn_say 'SSH port is: '$(cat .run/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
+fi
 
-echo
-cd ansible
-newborn_say "Running Ansible playbook..."
-echo
-# ansible all -m gather_facts
-ansible-playbook --extra-vars "newborn_server_name_global=$SERVER_NAME newborn_user_name=$NEW_USER_NAME newborn_user_password=$NEW_USER_PASSWORD newborn_user_password_salt=$NEW_USER_PASSWORD_SALT newborn_user_sudo=$NEW_USER_SUDO newborn_oci_platform=$OCI_PLATFORM newborn_oci_compose=$OCI_COMPOSE" playbook.yml
-echo
-cd ..
-newborn_say "done."
+if [ "$OUT_PRINT_PASSWORD" = 'y' ]; then
+    if [ -z "$NEW_USER_PASSWORD" ]; then
+        newborn_say 'New password: '$(cat .run/output/password.txt)
+    fi
+fi
 
-echo
-newborn_say "Complete."
+if [ "$OUT_SSH_KEY_PATH" != '' ]; then
+    cp .run/output/ssh_key $OUT_SSH_KEY_PATH
+    chmod 600 $OUT_SSH_KEY_PATH
+    newborn_say 'SSH key copied to '$OUT_SSH_KEY_PATH
+fi
 
-unset SERVER_NAME
-unset NEW_USER_NAME
-unset NEW_USER_PASSWORD
-unset NEW_USER_PASSWORD_SALT
-unset NEW_USER_SUDO
-unset OCI_PLATFORM
-unset OCI_COMPOSE
-unset REST_ARGS
+rm -rf ./.run > /dev/null

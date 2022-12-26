@@ -1,7 +1,5 @@
 
-FROM kirickme/ansible
-
-COPY . /app
-WORKDIR /app
-
-ENTRYPOINT [ "/bin/bash", "./newborn.sh" ]
+FROM		kirickme/ansible
+COPY		./src /app
+WORKDIR		/app
+ENTRYPOINT	[ "/bin/bash", "./entrypoint.sh" ]
