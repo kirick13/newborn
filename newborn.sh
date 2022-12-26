@@ -129,11 +129,11 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -*|--*)
-            echo "Unknown argument $1"
+            newborn_say 'Unknown argument '$1
             exit 1
             ;;
         *)
-            echo "Unknown argument $1"
+            newborn_say 'Unknown argument '$1
             exit 1
             ;;
     esac
