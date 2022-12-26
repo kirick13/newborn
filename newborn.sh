@@ -1,7 +1,7 @@
 #!/bin/bash
 
 newborn_say () {
-    echo "[NEWBORN] $1"
+    echo '[NEWBORN] '$1
 }
 
 normalpath () {
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
             IP=$2
             shift
             shift
-            read -s -p 'Enter current password for '$IP': ' PASSWORD
+            read -s -p '[NEWBORN] Enter current password for '$IP': ' PASSWORD
             echo
             ;;
         # setup
@@ -57,7 +57,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --ask-new-password)
-            read -s -p 'Enter new password for '$IP': ' NEW_USER_PASSWORD
+            read -s -p '[NEWBORN] Enter new password for '$IP': ' NEW_USER_PASSWORD
             echo
             shift
             ;;
@@ -94,7 +94,7 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             if [ -f "$OUT_SSH_KEY_PATH" ]; then
-                echo "Error: file $OUT_SSH_KEY_PATH already exists"
+                echo '[NEWBORN] Error: file '$OUT_SSH_KEY_PATH' already exists'
                 exit 1
             fi
             ;;
