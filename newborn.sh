@@ -4,6 +4,10 @@ newborn_say () {
     echo "[NEWBORN] $1"
 }
 
+normalpath () {
+    python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' $1
+}
+
 # connection
 INVENTORY_FILE=''
 IP=''
@@ -156,9 +160,14 @@ if [ -z "$INVENTORY_FILE" ]; then
 fi
 
 if [ -z "$SSH_KEY_PATH" ]; then
+    if [ -z "$OUT_SSH_KEY_PATH" ]; then
+        echo "Error: SSH key will be generated, but output path is not provided. Use -k or --ssh-key"
+        exit 1
+    fi
+
     SSH_KEY_GENERATE='y'
-    SSH_KEY_PATH='/tmp/notexists'
-    SSH_KEY_PATH_DOCKER='/tmp/notexists'
+    SSH_KEY_PATH='/tmp/nothing'
+    SSH_KEY_PATH_DOCKER='/tmp/nothing'
 else
     SSH_KEY_GENERATE='n'
     SSH_KEY_PATH_DOCKER='/app/input/ssh_key'
@@ -183,6 +192,17 @@ echo
 newborn_say 'Setup complete!'
 
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
+    if [ "$SSH_KEY_GENERATE" = 'y' ]; then
+        SAVED_SSH_KEY_PATH=$OUT_SSH_KEY_PATH
+    else
+        SAVED_SSH_KEY_PATH=$SSH_KEY_PATH
+    fi
+
+    if [ "$SAVED_SSH_KEY_PATH" != '' ]; then
+        cat .run/output/inventory | awk '{ print $0, "ansible_ssh_private_key_file='$(normalpath $SAVED_SSH_KEY_PATH)'" }' > .run/output/inventory.tmp
+        mv .run/output/inventory.tmp .run/output/inventory
+    fi
+
     cat .run/output/inventory >> $OUT_INVENTORY_PATH
     newborn_say 'Inventory appended to '$OUT_INVENTORY_PATH
 else
