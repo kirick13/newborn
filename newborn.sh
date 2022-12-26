@@ -147,11 +147,11 @@ mkdir -p ./.run/output > /dev/null
 
 if [ -z "$INVENTORY_FILE" ]; then
     if [ -z "$IP" ]; then
-        echo "Error: neither IP address nor Ansible inventory provided"
+        newborn_say 'Error: neither IP address nor Ansible inventory provided'
         exit 1
     fi
     if [ -z "$PASSWORD" ]; then
-        echo "Error: neither password nor Ansible inventory provided. Use -p or --password"
+        newborn_say 'Error: neither password nor Ansible inventory provided. Use -p or --password'
         exit 1
     fi
 
@@ -161,7 +161,7 @@ fi
 
 if [ -z "$SSH_KEY_PATH" ]; then
     if [ -z "$OUT_SSH_KEY_PATH" ]; then
-        echo "Error: SSH key will be generated, but output path is not provided. Use -k or --ssh-key"
+        newborn_say 'Error: SSH key will be generated, but output path is not provided. Use -k or --ssh-key'
         exit 1
     fi
 
@@ -169,6 +169,11 @@ if [ -z "$SSH_KEY_PATH" ]; then
     SSH_KEY_PATH='/tmp/nothing'
     SSH_KEY_PATH_DOCKER='/tmp/nothing'
 else
+    if [ -f "$SSH_KEY_PATH" ]; then
+        newborn_say 'Error: SSH key file '$SSH_KEY_PATH' does not exist.'
+        exit 1
+    fi
+
     SSH_KEY_GENERATE='n'
     SSH_KEY_PATH_DOCKER='/app/input/ssh_key'
 fi

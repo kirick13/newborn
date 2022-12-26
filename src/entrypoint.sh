@@ -14,16 +14,18 @@ fi
 NEWBORN_NEW_USER_PASSWORD_SALT="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 16)"
 echo $NEWBORN_NEW_USER_PASSWORD > output/password.txt
 
-if [ -f "/app/input/ssh_key" ]; then
+if [ -f input/ssh_key ]; then
 	newborn_say 'Generating SSH public key from private key...'
-	ssh-keygen -y -f /app/input/ssh_key > /app/input/ssh_key.pub
+	ssh-keygen -y \
+	           -f input/ssh_key \
+			   > input/ssh_key.pub
 else
 	newborn_say 'Generating SSH key pair...'
 	ssh-keygen -t ecdsa \
 	           -m PEM \
 	           -b 521 \
 	           -N '' \
-	           -f /app/input/ssh_key \
+	           -f input/ssh_key \
 	           > /dev/null
 	chmod 666 input/ssh_key
 	cp input/ssh_key output/ssh_key
