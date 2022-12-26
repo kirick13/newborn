@@ -169,7 +169,7 @@ if [ -z "$SSH_KEY_PATH" ]; then
     SSH_KEY_PATH='/tmp/nothing'
     SSH_KEY_PATH_DOCKER='/tmp/nothing'
 else
-    if [ -f "$SSH_KEY_PATH" ]; then
+    if [ ! -f "$SSH_KEY_PATH" ]; then
         newborn_say 'Error: SSH key file '$SSH_KEY_PATH' does not exist.'
         exit 1
     fi
