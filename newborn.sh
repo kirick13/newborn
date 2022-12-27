@@ -5,7 +5,7 @@ newborn_say () {
 }
 
 normalpath () {
-    python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' $1
+    python3 -c 'import os,sys;print(os.path.abspath(os.path.expanduser(sys.argv[1])))' $1
 }
 
 # connection
