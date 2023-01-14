@@ -23,6 +23,8 @@
       use: systemd
 
   - name: Resize filesystem
+    args:
+      warn: false
     shell: |
       DISK_LABEL=$(df | grep -E '\/$' | awk '{print $1}')
       resize2fs $DISK_LABEL
@@ -30,7 +32,6 @@
       unset DISK_LABEL
 
   - name: Set UTC timezone
-    warn: false
     shell: |
       ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
       dpkg-reconfigure --frontend noninteractive tzdata
