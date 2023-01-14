@@ -14,6 +14,7 @@ PASSWORD=''
 CONN_SSH_KEY_PATH=''
 # setup
 SERVER_NAME='server'
+SWAP_SIZE=''
 NEW_USER_NAME='user'
 NEW_USER_SUDO='n'
 NEW_USER_PASSWORD=''
@@ -50,6 +51,11 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
+		--swap)
+			SWAP_SIZE=$2
+			shift
+			shift
+			;;
 		-u|--user)
 			NEW_USER_NAME=$2
 			shift
@@ -60,7 +66,7 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 		--ask-new-password)
-			read -s -p '[NEWBORN] Enter new password for '$IP': ' NEW_USER_PASSWORD
+			read -s -p '[NEWBORN] Enter new password for '$NEW_USER_NAME'@'$IP': ' NEW_USER_PASSWORD
 			echo
 			shift
 			;;
@@ -109,26 +115,27 @@ while [[ $# -gt 0 ]]; do
 			echo 'Usage: ./newborn.sh [options]'
 			echo
 			echo 'Connection options:'
-			echo '  --ip <ip>                    IP address of the server'
-			echo '  -p, --password <password>    Password of the server'
-			echo '  --ssh-connect-key <path>     Path to SSH private key to connect to server'
+			echo '  --ip <ip>                   IP address of the server'
+			echo '  -p, --password <password>   Password of the server'
+			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to server'
 			echo
 			echo 'Setup options:'
-			echo '  -n, --name <name>            Server name (will only be used in Bash prompt, default: "server")'
-			echo '  -u, --user <name>            New user name (default: "user")'
-			echo '  --user-sudo                  Add new user to sudoers'
-			echo '  --ask-new-password           Ask for new user password (otherwise random password will be generated)'
-			echo '  --ssh-key <path>             Path to new SSH key (otherwise it will be generated)'
+			echo '  -n, --name <name>           Server name (will only be used in Bash prompt, default: "server")'
+			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.)'
+			echo '  -u, --user <name>           New user name (default: "user")'
+			echo '  --user-sudo                 Add new user to sudoers'
+			echo '  --ask-new-password          Ask for new user password (otherwise random password will be generated)'
+			echo '  --ssh-key <path>            Path to new SSH key (otherwise it will be generated)'
 			echo
 			echo 'Packages options:'
-			echo '  --docker                     Install Docker'
-			echo '  --podman                     Install Podman'
-			echo '  --compose                    Install Docker Compose / Podman Compose'
+			echo '  --docker                    Install Docker'
+			echo '  --podman                    Install Podman'
+			echo '  --compose                   Install Docker Compose / Podman Compose'
 			echo
 			echo 'Output options:'
-			echo '  --append-inventory <path>    Append processed hosts to Ansible inventory'
-			echo '  --print-password             Print new user password to stdout'
-			echo '  --copy-ssh-key <path>        Copy SSH key to file'
+			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
+			echo '  --print-password            Print new user password to stdout'
+			echo '  --copy-ssh-key <path>       Copy SSH key to file'
 			echo
 			exit 0
 			;;
@@ -149,19 +156,6 @@ mkdir -p ./.run > /dev/null
 mkdir -p ./.run/input > /dev/null
 mkdir -p ./.run/output > /dev/null
 
-# if [ -z "$INVENTORY_FILE" ]; then
-# 	if [ -z "$IP" ]; then
-# 		newborn_say 'Error: neither IP address nor Ansible inventory provided'
-# 		exit 1
-# 	fi
-# 	if [ -z "$PASSWORD" ]; then
-# 		newborn_say 'Error: neither password nor Ansible inventory provided. Use -p or --password'
-# 		exit 1
-# 	fi
-
-# 	echo "$IP ansible_ssh_pass=$PASSWORD" > .run/input/inventory
-# 	INVENTORY_FILE="$PWD/.run/input/inventory"
-# fi
 INVENTORY_FILE="$PWD/.run/input/inventory"
 if [ ! -z "$PASSWORD" ]; then
 	echo "$IP ansible_ssh_pass=$PASSWORD" > $INVENTORY_FILE
@@ -201,6 +195,7 @@ docker run --rm \
 		   -v "$CONN_SSH_KEY_PATH:/app/input/ssh.private.key" \
            -v "$SSH_KEY_PATH:$SSH_KEY_PATH_DOCKER" \
            -e "NEWBORN_SERVER_NAME=$SERVER_NAME" \
+		   -e "NEWBORN_SWAP_SIZE=$SWAP_SIZE" \
            -e "NEWBORN_NEW_USER_NAME=$NEW_USER_NAME" \
            -e "NEWBORN_NEW_USER_PASSWORD=$NEW_USER_PASSWORD" \
            -e "NEWBORN_NEW_USER_SUDO=$NEW_USER_SUDO" \
