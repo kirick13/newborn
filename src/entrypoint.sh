@@ -1,6 +1,4 @@
 
-#!/bin/bash
-
 newborn_say () {
 	echo "[NEWBORN] $1"
 }
