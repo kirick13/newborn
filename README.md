@@ -47,8 +47,9 @@ git clone https://github.com/kirick13/newborn.git
 | Option | Description |
 | - | - |
 | `--ip <ip>` | IP address of the server. <br> Alias: `-h`. |
-| `--password <password>` | Root user's password. <br> Incompatible with `--ssh-connect-key`. <br> Alias: `-p`. |
-| `--ssh-connect-key <path>` | Path to SSH private key to connect to server. <br> Incompatible with `--password`. |
+| `--password <password>` | Root user's password. <br> Incompatible with `--password-stdin`, `--ssh-connect-key`. <br> Alias: `-p`. |
+| `--password-stdin` | Enter root user's password via stdin. <br> Incompatible with `--password`, `--ssh-connect-key`. <br> Alias: `-p`. |
+| `--ssh-connect-key <path>` | Path to SSH private key to connect to server. <br> Incompatible with `--password`, `--password-stdin`. |
 
 #### Setup options
 
@@ -79,5 +80,4 @@ git clone https://github.com/kirick13/newborn.git
 
 ## TODO:
 
-- Add `--password-stdin` option.
 - Support different distros.

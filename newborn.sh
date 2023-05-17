@@ -40,6 +40,11 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
+		--password-stdin)
+			read -s -p '[NEWBORN] Enter current password for root@'$IP': ' PASSWORD
+			echo
+			shift
+			;;
 		--ssh-connect-key)
 			CONN_SSH_KEY_PATH=$2
 			shift
@@ -189,7 +194,9 @@ fi
 echo
 
 docker build -t local/newborn .
-docker run --rm \
+docker run --interactive \
+           --tty \
+           --rm \
            -v "$PWD/.run/output:/app/output" \
            -v "$INVENTORY_FILE:/app/input/inventory" \
 		   -v "$CONN_SSH_KEY_PATH:/app/input/ssh.private.key" \
