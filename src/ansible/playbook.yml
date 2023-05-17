@@ -8,6 +8,10 @@
     shell: dpkg --print-architecture
     register: newborn_arch
 
+  - name: Set swap
+    script: "../swap.sh {{ newborn_swap_size }}"
+    when: newborn_swap_size != ""
+
   - name: Set password for root
     user:
       name: root
@@ -26,6 +30,8 @@
       unset DISK_LABEL
 
   - name: Set UTC timezone
+    args:
+      warn: false
     shell: |
       ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
       dpkg-reconfigure --frontend noninteractive tzdata
@@ -166,7 +172,7 @@
 
   - name: Add SSH key for user "{{ newborn_user_name }}"
     copy:
-      src: /data/newborn/ssh.public.key
+      src: /app/input/ssh_key.pub
       dest: "/home/{{ newborn_user_name }}/.ssh/authorized_keys"
       owner: "{{ newborn_user_name }}"
       group: "{{ newborn_user_name }}"
@@ -178,7 +184,7 @@
       dest: /etc/ssh/sshd_config
       mode: '0644'
 
-  - name: Set SSH port to .bashrc file
+  - name: Set SSH port to OpenSSH config file
     lineinfile:
       path: /etc/ssh/sshd_config
       regexp: '^Port 22$'
