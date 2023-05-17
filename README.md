@@ -46,7 +46,7 @@ git clone https://github.com/kirick13/newborn.git
 
 | Option | Description |
 | - | - |
-| `--ip <ip>` | IP address of the server. |
+| `--ip <ip>` | IP address of the server. <br> Alias: `-h`. |
 | `--password <password>` | Root user's password. <br> Incompatible with `--ssh-connect-key`. <br> Alias: `-p`. |
 | `--ssh-connect-key <path>` | Path to SSH private key to connect to server. <br> Incompatible with `--password`. |
 

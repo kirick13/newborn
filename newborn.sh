@@ -30,7 +30,7 @@ OUT_SSH_KEY_PATH=''
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		# connection
-		--ip)
+		-h|--ip)
 			IP=$2
 			shift
 			shift
