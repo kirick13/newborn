@@ -19,6 +19,7 @@ NEW_USER_NAME='user'
 NEW_USER_SUDO='n'
 NEW_USER_PASSWORD=''
 SSH_KEY_PATH=''
+FIREWALL='n'
 # packages
 OCI_PLATFORM='none'
 OCI_COMPOSE='n'
@@ -80,6 +81,10 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
+		--firewall)
+			FIREWALL='y'
+			shift
+			;;
 		# packages
 		--docker)
 			OCI_PLATFORM='docker'
@@ -120,8 +125,9 @@ while [[ $# -gt 0 ]]; do
 			echo 'Usage: ./newborn.sh [options]'
 			echo
 			echo 'Connection options:'
-			echo '  --ip <ip>                   IP address of the server'
+			echo '  -h, --ip <ip>               IP address of the server'
 			echo '  -p, --password <password>   Root user'"'"'s password'
+			echo '  --password-stdin            Read root user'"'"'s password from stdin'
 			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to server'
 			echo
 			echo 'Setup options:'
@@ -131,6 +137,7 @@ while [[ $# -gt 0 ]]; do
 			echo '  --user-sudo                 Add the user to sudoers'
 			echo '  --ask-new-password          Ask for new user password; otherwise random password will be generated'
 			echo '  --ssh-key <path>            Path to new SSH key; otherwise it will be generated'
+			echo '  --firewall                  Setup UFW firewall'
 			echo
 			echo 'Sowtware options:'
 			echo '  --docker                    Install Docker'
@@ -206,6 +213,7 @@ docker run --interactive \
            -e "NEWBORN_NEW_USER_NAME=$NEW_USER_NAME" \
            -e "NEWBORN_NEW_USER_PASSWORD=$NEW_USER_PASSWORD" \
            -e "NEWBORN_NEW_USER_SUDO=$NEW_USER_SUDO" \
+		   -e "NEWBORN_FIREWALL=$FIREWALL" \
            -e "NEWBORN_OCI_PLATFORM=$OCI_PLATFORM" \
            -e "NEWBORN_OCI_COMPOSE=$OCI_COMPOSE" \
            local/newborn
