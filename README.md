@@ -51,7 +51,6 @@ git clone https://github.com/kirick13/newborn.git
 | `--password <password>` | Root user's password. <br> Incompatible with `--password-stdin`, `--ssh-connect-key`. <br> Alias: `-p`. |
 | `--password-stdin` | Enter root user's password via stdin. <br> Incompatible with `--password`, `--ssh-connect-key`. <br> Alias: `-p`. |
 | `--ssh-connect-key <path>` | Path to SSH private key to connect to server. <br> Incompatible with `--password`, `--password-stdin`. |
-| `--firewall` | Enable UFW rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 for Cloudflare. To change rules, edit `/root/ufw.sh` script on your server. Cron will re-apply UFW rules every day at 3 AM to maintain actual Cloudflare IPs. |
 
 #### Setup options
 
@@ -63,6 +62,7 @@ git clone https://github.com/kirick13/newborn.git
 | `--user-sudo` | Add the user to sudoers. |
 | `--ask-new-password` | Ask for new user password; otherwise random password will be generated. |
 | `--ssh-key <path>` | Path to new SSH key; otherwise it will be generated. |
+| `--firewall` | Enable UFW rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 for Cloudflare. To change rules, edit `/root/ufw.sh` script on your server. Cron will re-apply UFW rules every day at 3 AM to maintain actual Cloudflare IPs. |
 
 #### Sowtware options
 
