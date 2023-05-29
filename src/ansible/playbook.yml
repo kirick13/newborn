@@ -9,7 +9,7 @@
     register: newborn_arch
 
   - name: Set swap
-    script: "../swap.sh {{ newborn_swap_size }}"
+    script: "../scripts/swap.sh {{ newborn_swap_size }}"
     when: newborn_swap_size != ""
 
   - name: Set password for root
@@ -198,7 +198,7 @@
 
   - name: Copy the UFW update script
     copy:
-      src: ../configs/ufw.sh
+      src: ../scripts/ufw.sh
       dest: /root/ufw.sh
       owner: root
       group: root
