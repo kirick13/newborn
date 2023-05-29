@@ -49,7 +49,7 @@ git clone https://github.com/kirick13/newborn.git
 | - | - |
 | `--ip <ip>` | IP address of the server. <br> Alias: `-h`. |
 | `--password <password>` | Root user's password. <br> Incompatible with `--password-stdin`, `--ssh-connect-key`. <br> Alias: `-p`. |
-| `--password-stdin` | Enter root user's password via stdin. <br> Incompatible with `--password`, `--ssh-connect-key`. <br> Alias: `-p`. |
+| `--password-stdin` | Enter root user's password via stdin. <br> Incompatible with `--password`, `--ssh-connect-key`. |
 | `--ssh-connect-key <path>` | Path to SSH private key to connect to server. <br> Incompatible with `--password`, `--password-stdin`. |
 
 #### Setup options
