@@ -47,8 +47,9 @@
       name:
         - curl
         - python3
-        - iptables-persistent
         - vim
+        - ufw
+        - cron
 
   - name: Copy .bashrc file
     copy:
@@ -194,3 +195,25 @@
     service:
       name: sshd
       state: restarted
+
+  - name: Copy the UFW update script
+    copy:
+      src: ../configs/ufw.sh
+      dest: /root/ufw.sh
+      owner: root
+      group: root
+      mode: '0755'
+    when: newborn_firewall == "y"
+
+  - name: Create a cron job to run the UFW update script
+    cron:
+      name: Update UFW rules
+      user: root
+      minute: '0'
+      hour: '3'
+      job: '/root/ufw.sh >/dev/null 2>&1'
+    when: newborn_firewall == "y"
+
+  - name: Apply UFW rules
+    shell: /root/ufw.sh
+    when: newborn_firewall == "y"
