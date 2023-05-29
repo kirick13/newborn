@@ -17,6 +17,7 @@ Init your newly created Ubuntu webservers in a minutes.
     - moves it to random port (**different** on each host);
     - disables password authentication;
     - disables root login;
+- adds firewall rules;
 - hides server's hostname;
 - creates pretty Bash prompt.
 
