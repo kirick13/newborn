@@ -23,6 +23,7 @@ FIREWALL='n'
 # packages
 OCI_PLATFORM='none'
 OCI_COMPOSE='n'
+K8S=''
 # output
 OUT_INVENTORY_PATH=''
 OUT_PRINT_PASSWORD='n'
@@ -98,6 +99,10 @@ while [[ $# -gt 0 ]]; do
 			OCI_COMPOSE='y'
 			shift
 			;;
+		--microk8s)
+			K8S='microk8s'
+			shift
+			;;
 		# output
 		--append-inventory)
 			OUT_INVENTORY_PATH=$2
@@ -143,6 +148,7 @@ while [[ $# -gt 0 ]]; do
 			echo '  --docker                    Install Docker'
 			echo '  --podman                    Install Podman'
 			echo '  --compose                   Install Docker Compose / Podman Compose'
+			echo '  --microk8s                  Install MicroK8s'
 			echo
 			echo 'Output options:'
 			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
@@ -216,6 +222,7 @@ docker run --interactive \
 		   -e "NEWBORN_FIREWALL=$FIREWALL" \
            -e "NEWBORN_OCI_PLATFORM=$OCI_PLATFORM" \
            -e "NEWBORN_OCI_COMPOSE=$OCI_COMPOSE" \
+		   -e "NEWBORN_K8S=$K8S" \
            local/newborn
 
 echo

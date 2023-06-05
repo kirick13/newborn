@@ -5,6 +5,8 @@ newborn_say () {
 
 echo
 
+NEWBORN_HOSTNAME='host-'$(tr -dc a-f0-9 < /dev/urandom | head -c 8)
+
 if [ -z "$NEWBORN_NEW_USER_PASSWORD" ]; then
 	newborn_say 'Generating random password...'
 	NEWBORN_NEW_USER_PASSWORD="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 100)"
@@ -42,4 +44,4 @@ cat input/inventory \
 cd ansible
 
 newborn_say "Running Ansible playbook..."
-ansible-playbook --extra-vars "newborn_server_name_global=$NEWBORN_SERVER_NAME newborn_swap_size=$NEWBORN_SWAP_SIZE newborn_user_name=$NEWBORN_NEW_USER_NAME newborn_user_password=$NEWBORN_NEW_USER_PASSWORD newborn_user_password_salt=$NEWBORN_NEW_USER_PASSWORD_SALT newborn_user_sudo=$NEWBORN_NEW_USER_SUDO newborn_firewall=$NEWBORN_FIREWALL newborn_oci_platform=$NEWBORN_OCI_PLATFORM newborn_oci_compose=$NEWBORN_OCI_COMPOSE" playbook.yml
+ansible-playbook --extra-vars "newborn_hostname=$NEWBORN_HOSTNAME newborn_server_name_global=$NEWBORN_SERVER_NAME newborn_swap_size=$NEWBORN_SWAP_SIZE newborn_user_name=$NEWBORN_NEW_USER_NAME newborn_user_password=$NEWBORN_NEW_USER_PASSWORD newborn_user_password_salt=$NEWBORN_NEW_USER_PASSWORD_SALT newborn_user_sudo=$NEWBORN_NEW_USER_SUDO newborn_firewall=$NEWBORN_FIREWALL newborn_oci_platform=$NEWBORN_OCI_PLATFORM newborn_oci_compose=$NEWBORN_OCI_COMPOSE newborn_k8s=$NEWBORN_K8S" playbook.yml

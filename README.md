@@ -57,7 +57,7 @@ git clone https://github.com/kirick13/newborn.git
 | Option | Description |
 | - | - |
 | `--name <name>` | Server name to use in Bash prompt. <br> Default: `server`. <br> Alias: `-n`. |
-| `--swap <size>` | Swap to add (e.g. "500M", "1G", "2G", "4G", etc.) |
+| `--swap <size>` | Swap to add (e.g. "500M", "1G", "2G", "4G", etc.). <br> By default, swap will be disabled. |
 | `--user <name>` | New user name. <br> Default: `user`. <br> Alias: `-u`. |
 | `--user-sudo` | Add the user to sudoers. |
 | `--ask-new-password` | Ask for new user password; otherwise random password will be generated. |
@@ -71,6 +71,7 @@ git clone https://github.com/kirick13/newborn.git
 | `--docker` | Install Docker. <br> Incompatible with `--podman`. |
 | `--podman` | Install Podman. <br> Incompatible with `--docker`. |
 | `--compose` | Install Compose for Docker or Podman. |
+| `--microk8s` | Install MicroK8S. |
 
 #### Output options
 

@@ -10,7 +10,6 @@
 
   - name: Set swap
     script: "../scripts/swap.sh {{ newborn_swap_size }}"
-    when: newborn_swap_size != ""
 
   - name: Set password for root
     user:
@@ -19,7 +18,7 @@
 
   - name: Set hostname
     hostname:
-      name: ubuntu
+      name: "{{ newborn_hostname }}"
       use: systemd
 
   - name: Resize filesystem
@@ -139,6 +138,10 @@
       name: podman-compose
     when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
 
+  - name: Install MicroK8S
+    shell: snap install microk8s --classic
+    when: newborn_k8s == "microk8s"
+
   - name: Create user "{{ newborn_user_name }}"
     user:
       name: "{{ newborn_user_name }}"
@@ -158,6 +161,13 @@
       groups: docker
       append: true
     when: newborn_oci_platform == "docker"
+
+  - name: Add user "{{ newborn_user_name }}" to group "microk8s"
+    user:
+      name: "{{ newborn_user_name }}"
+      groups: microk8s
+      append: true
+    when: newborn_k8s == "microk8s"
 
   - name: Remove .bashrc file related to user "{{ newborn_user_name }}"
     file:
