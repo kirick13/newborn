@@ -138,6 +138,12 @@
       name: podman-compose
     when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
 
+  - name: Install Snap
+    apt:
+      name:
+        - snapd
+    when: newborn_k8s == "microk8s"
+
   - name: Install MicroK8S
     shell: snap install microk8s --classic
     when: newborn_k8s == "microk8s"
