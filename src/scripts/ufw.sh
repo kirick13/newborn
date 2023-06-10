@@ -21,7 +21,7 @@ ufw allow from fc00::/7
 
 # Allow ssh connections
 SSH_PORT=$(grep '^Port ' /etc/ssh/sshd_config | cut -d ' ' -f2)
-sudo ufw allow ${SSH_PORT:-22}/tcp
+ufw allow ${SSH_PORT:-22}/tcp
 
 # Fetch the current list of Cloudflare IP ranges
 CF_IP_RANGES_V4=$(curl -s https://www.cloudflare.com/ips-v4)

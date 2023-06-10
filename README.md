@@ -6,19 +6,18 @@ Init your newly created Ubuntu webservers in a minutes.
 ## What does it do?
 
 - updates the system;
-- adds swap;
-- installs Docker or Podman;
-- installs Docker Compose or Podman Compose;
+- adds (or removes) swap;
+- installs Docker, Podman, Compose, microk8s;
 - creates a new user:
-    - with random password (**same** on each host);
-    - with SSH key (**same** on each host);
+    - with random password;
+    - with SSH key;
     - adds sudo access to it;
 - secures SSH:
-    - moves it to random port (**different** on each host);
+    - moves it to random port;
     - disables password authentication;
     - disables root login;
 - adds firewall rules;
-- hides server's hostname;
+- creates unique server's hostname;
 - creates pretty Bash prompt.
 
 ## Usage
@@ -57,7 +56,7 @@ git clone https://github.com/kirick13/newborn.git
 | Option | Description |
 | - | - |
 | `--name <name>` | Server name to use in Bash prompt. <br> Default: `server`. <br> Alias: `-n`. |
-| `--swap <size>` | Swap to add (e.g. "500M", "1G", "2G", "4G", etc.) |
+| `--swap <size>` | Swap to add (e.g. "500M", "1G", "2G", "4G", etc.). <br> By default, swap will be disabled. |
 | `--user <name>` | New user name. <br> Default: `user`. <br> Alias: `-u`. |
 | `--user-sudo` | Add the user to sudoers. |
 | `--ask-new-password` | Ask for new user password; otherwise random password will be generated. |
@@ -71,6 +70,7 @@ git clone https://github.com/kirick13/newborn.git
 | `--docker` | Install Docker. <br> Incompatible with `--podman`. |
 | `--podman` | Install Podman. <br> Incompatible with `--docker`. |
 | `--compose` | Install Compose for Docker or Podman. |
+| `--microk8s` | Install MicroK8S. |
 
 #### Output options
 
