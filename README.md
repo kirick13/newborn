@@ -6,19 +6,18 @@ Init your newly created Ubuntu webservers in a minutes.
 ## What does it do?
 
 - updates the system;
-- adds swap;
-- installs Docker or Podman;
-- installs Docker Compose or Podman Compose;
+- adds (or removes) swap;
+- installs Docker, Podman, Compose, microk8s;
 - creates a new user:
-    - with random password (**same** on each host);
-    - with SSH key (**same** on each host);
+    - with random password;
+    - with SSH key;
     - adds sudo access to it;
 - secures SSH:
-    - moves it to random port (**different** on each host);
+    - moves it to random port;
     - disables password authentication;
     - disables root login;
 - adds firewall rules;
-- hides server's hostname;
+- creates unique server's hostname;
 - creates pretty Bash prompt.
 
 ## Usage
