@@ -40,6 +40,7 @@
       update_cache: true
       upgrade: dist
       autoremove: true
+      lock_timeout: 600
 
   - name: Install packages
     apt:
@@ -49,6 +50,7 @@
         - vim
         - ufw
         - cron
+      lock_timeout: 600
 
   - name: Copy .bashrc file
     copy:
@@ -93,6 +95,7 @@
   - name: Install Docker
     apt:
       name: docker-ce
+      lock_timeout: 600
     when: newborn_oci_platform == "docker"
 
   - name: Copy Docker daemon logging config file
@@ -126,11 +129,13 @@
   - name: Install Podman
     apt:
       name: podman
+      lock_timeout: 600
     when: newborn_oci_platform == "podman"
 
   - name: Install Pip3
     apt:
       name: python3-pip
+      lock_timeout: 600
     when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
 
   - name: Install Podman Compose
@@ -142,6 +147,7 @@
     apt:
       name:
         - snapd
+      lock_timeout: 600
     when: newborn_k8s == "microk8s"
 
   - name: Install MicroK8S
