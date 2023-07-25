@@ -231,6 +231,7 @@ echo
 newborn_say 'Setup complete!'
 
 export NEWBORN_IP=$IP
+export NEWBORN_USER=$NEW_USER_NAME
 
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	if [ "$SSH_KEY_GENERATE" = 'y' ]; then
