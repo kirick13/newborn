@@ -222,10 +222,10 @@ docker run --interactive \
 		   -e "NEWBORN_K8S=$K8S" \
            local/newborn
 
-# if [ $? -ne 0 ]; then
-# 	newborn_say 'Error: Ansible playbook failed.'
-# 	exit 1
-# fi
+if [ $? -ne 0 ]; then
+	newborn_say 'Error: Ansible playbook failed.'
+	exit 1
+fi
 
 source $RUN_DIRECTORY/output/return.bash
 
@@ -264,12 +264,5 @@ fi
 export NEWBORN_USER=$NEW_USER_NAME
 export NEWBORN_USER_PASSWORD
 export NEWBORN_HOSTNAME
-
-echo 'NEWBORN_IP='$NEWBORN_IP
-echo 'NEWBORN_SSH_PORT='$NEWBORN_SSH_PORT
-echo 'NEWBORN_SSH_KEY_PATH='$NEWBORN_SSH_KEY_PATH
-echo 'NEWBORN_USER='$NEWBORN_USER
-echo 'NEWBORN_USER_PASSWORD='$NEWBORN_USER_PASSWORD
-echo 'NEWBORN_HOSTNAME='$NEWBORN_HOSTNAME
 
 rm -rf $RUN_DIRECTORY > /dev/null
