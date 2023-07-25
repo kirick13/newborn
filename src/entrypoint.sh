@@ -41,6 +41,9 @@ cat input/inventory \
 	done \
 	| tee ansible/inventory > /dev/null
 
+touch output/return.bash
+echo 'export NEWBORN_HOSTNAME="'$NEWBORN_HOSTNAME'"' >> output/return.bash
+
 cd ansible
 
 newborn_say "Running Ansible playbook..."

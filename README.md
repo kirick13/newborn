@@ -63,7 +63,7 @@ git clone https://github.com/kirick13/newborn.git
 | `--ssh-key <path>` | Path to new SSH key; otherwise it will be generated. |
 | `--firewall` | Enable UFW rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 for Cloudflare. To change rules, edit `/root/ufw.sh` script on your server. Cron will re-apply UFW rules every day at 3 AM to maintain actual Cloudflare IPs. |
 
-#### Sowtware options
+#### Software options
 
 | Option | Description |
 | - | - |
@@ -77,7 +77,6 @@ git clone https://github.com/kirick13/newborn.git
 | Option | Description |
 | - | - |
 | `--append-inventory <path>` | Append processed host to Ansible inventory. |
-| `--print-password` | Print new user password to stdout. |
 | `--copy-ssh-key <path>` | Copy SSH key to file. |
 
 ## TODO:

@@ -8,6 +8,11 @@ normalpath () {
 	python3 -c 'import os,sys;print(os.path.abspath(os.path.expanduser(sys.argv[1])))' $1
 }
 
+RUN_ID=$(date +%s)
+RUN_DIRECTORY="$PWD/.run/$RUN_ID"
+
+mkdir -p $RUN_DIRECTORY > /dev/null
+
 # connection
 IP=''
 PASSWORD=''
@@ -26,7 +31,6 @@ OCI_COMPOSE='n'
 K8S=''
 # output
 OUT_INVENTORY_PATH=''
-OUT_PRINT_PASSWORD='n'
 OUT_SSH_KEY_PATH=''
 
 while [[ $# -gt 0 ]]; do
@@ -109,10 +113,6 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
-		--print-password)
-			OUT_PRINT_PASSWORD='y'
-			shift
-			;;
 		--copy-ssh-key)
 			OUT_SSH_KEY_PATH=$2
 			shift
@@ -130,15 +130,15 @@ while [[ $# -gt 0 ]]; do
 			echo 'Usage: ./newborn.sh [options]'
 			echo
 			echo 'Connection options:'
-			echo '  -h, --ip <ip>               IP address of the server'
-			echo '  -p, --password <password>   Root user'"'"'s password'
+			echo '  --ip, -h <ip>               IP address of the server'
+			echo '  --password, -p <password>   Root user'"'"'s password'
 			echo '  --password-stdin            Read root user'"'"'s password from stdin'
 			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to server'
 			echo
 			echo 'Setup options:'
-			echo '  -n, --name <name>           Server name to use in Bash prompt; default: "server"'
+			echo '  --name, -n <name>           Server name to use in Bash prompt; default: "server"'
 			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.)'
-			echo '  -u, --user <name>           New user name (default: "user")'
+			echo '  --user, -u <name>           New user name (default: "user")'
 			echo '  --user-sudo                 Add the user to sudoers'
 			echo '  --ask-new-password          Ask for new user password; otherwise random password will be generated'
 			echo '  --ssh-key <path>            Path to new SSH key; otherwise it will be generated'
@@ -152,7 +152,6 @@ while [[ $# -gt 0 ]]; do
 			echo
 			echo 'Output options:'
 			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
-			echo '  --print-password            Print new user password to stdout'
 			echo '  --copy-ssh-key <path>       Copy SSH key to file'
 			echo
 			exit 0
@@ -168,13 +167,11 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-rm -rf ./.run > /dev/null
+mkdir -p $RUN_DIRECTORY > /dev/null
+mkdir -p $RUN_DIRECTORY/input > /dev/null
+mkdir -p $RUN_DIRECTORY/output > /dev/null
 
-mkdir -p ./.run > /dev/null
-mkdir -p ./.run/input > /dev/null
-mkdir -p ./.run/output > /dev/null
-
-INVENTORY_FILE="$PWD/.run/input/inventory"
+INVENTORY_FILE="$RUN_DIRECTORY/input/inventory"
 if [ ! -z "$PASSWORD" ]; then
 	echo "$IP ansible_ssh_pass=$PASSWORD" > $INVENTORY_FILE
 	CONN_SSH_KEY_PATH='/tmp/nothing'
@@ -210,7 +207,7 @@ docker build -t local/newborn .
 docker run --interactive \
            --tty \
            --rm \
-           -v "$PWD/.run/output:/app/output" \
+           -v "$RUN_DIRECTORY/output:/app/output" \
            -v "$INVENTORY_FILE:/app/input/inventory" \
 		   -v "$CONN_SSH_KEY_PATH:/app/input/ssh.private.key" \
            -v "$SSH_KEY_PATH:$SSH_KEY_PATH_DOCKER" \
@@ -225,8 +222,15 @@ docker run --interactive \
 		   -e "NEWBORN_K8S=$K8S" \
            local/newborn
 
+if [ $? -ne 0 ]; then
+	newborn_say 'Error: Ansible playbook failed.'
+	exit 1
+fi
+
 echo
 newborn_say 'Setup complete!'
+
+export NEWBORN_IP=$IP
 
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	if [ "$SSH_KEY_GENERATE" = 'y' ]; then
@@ -236,26 +240,31 @@ if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	fi
 
 	if [ "$SAVED_SSH_KEY_PATH" != '' ]; then
-		cat .run/output/inventory | awk '{ print $0, "ansible_ssh_private_key_file='$(normalpath $SAVED_SSH_KEY_PATH)'" }' > .run/output/inventory.tmp
-		mv .run/output/inventory.tmp .run/output/inventory
+		cat $RUN_DIRECTORY/output/inventory | awk '{ print $0, "ansible_ssh_private_key_file='$(normalpath $SAVED_SSH_KEY_PATH)'" }' > $RUN_DIRECTORY/output/inventory.tmp
+		mv $RUN_DIRECTORY/output/inventory.tmp $RUN_DIRECTORY/output/inventory
 	fi
 
-	cat .run/output/inventory >> $OUT_INVENTORY_PATH
+	cat $RUN_DIRECTORY/output/inventory >> $OUT_INVENTORY_PATH
 	newborn_say 'Inventory appended to '$OUT_INVENTORY_PATH
 else
-	newborn_say 'SSH port is: '$(cat .run/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
+	export NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
 fi
 
-if [ "$OUT_PRINT_PASSWORD" = 'y' ]; then
-	if [ -z "$NEW_USER_PASSWORD" ]; then
-		newborn_say 'New password: '$(cat .run/output/password.txt)
-	fi
+if [ -z "$NEW_USER_PASSWORD" ]; then
+	export NEWBORN_USER_PASSWORD=$(cat $RUN_DIRECTORY/output/password.txt)
 fi
 
 if [ "$OUT_SSH_KEY_PATH" != '' ]; then
-	cp .run/output/ssh_key $OUT_SSH_KEY_PATH
+	cp $RUN_DIRECTORY/output/ssh_key $OUT_SSH_KEY_PATH
 	chmod 600 $OUT_SSH_KEY_PATH
 	newborn_say 'SSH key copied to '$OUT_SSH_KEY_PATH
 fi
 
-rm -rf ./.run > /dev/null
+source $RUN_DIRECTORY/output/return.bash
+export NEWBORN_HOSTNAME
+
+echo 'NEWBORN_SSH_PORT='$NEWBORN_SSH_PORT
+echo 'NEWBORN_USER_PASSWORD='$NEWBORN_USER_PASSWORD
+echo 'NEWBORN_HOSTNAME='$NEWBORN_HOSTNAME
+
+rm -rf $RUN_DIRECTORY > /dev/null
