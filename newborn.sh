@@ -20,7 +20,7 @@ CONN_SSH_KEY_PATH=''
 # setup
 SERVER_NAME='server'
 SWAP_SIZE=''
-NEW_USER_NAME='user'
+NEW_USER_NAME=$(LC_ALL=C tr -dc a-z0-9 < /dev/urandom | head -c 7)
 NEW_USER_SUDO='n'
 NEW_USER_PASSWORD=''
 SSH_KEY_PATH=''
@@ -222,16 +222,17 @@ docker run --interactive \
 		   -e "NEWBORN_K8S=$K8S" \
            local/newborn
 
-if [ $? -ne 0 ]; then
-	newborn_say 'Error: Ansible playbook failed.'
-	exit 1
-fi
+# if [ $? -ne 0 ]; then
+# 	newborn_say 'Error: Ansible playbook failed.'
+# 	exit 1
+# fi
+
+source $RUN_DIRECTORY/output/return.bash
 
 echo
 newborn_say 'Setup complete!'
 
 export NEWBORN_IP=$IP
-export NEWBORN_USER=$NEW_USER_NAME
 
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	if [ "$SSH_KEY_GENERATE" = 'y' ]; then
@@ -251,20 +252,23 @@ else
 	export NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
 fi
 
-if [ -z "$NEW_USER_PASSWORD" ]; then
-	export NEWBORN_USER_PASSWORD=$(cat $RUN_DIRECTORY/output/password.txt)
-fi
-
 if [ "$OUT_SSH_KEY_PATH" != '' ]; then
 	cp $RUN_DIRECTORY/output/ssh_key $OUT_SSH_KEY_PATH
 	chmod 600 $OUT_SSH_KEY_PATH
-	newborn_say 'SSH key copied to '$OUT_SSH_KEY_PATH
+	# newborn_say 'SSH key copied to '$OUT_SSH_KEY_PATH
+	export NEWBORN_SSH_KEY_PATH=$OUT_SSH_KEY_PATH
+else
+	export NEWBORN_SSH_KEY_PATH=$(normalpath $SSH_KEY_PATH)
 fi
 
-source $RUN_DIRECTORY/output/return.bash
+export NEWBORN_USER=$NEW_USER_NAME
+export NEWBORN_USER_PASSWORD
 export NEWBORN_HOSTNAME
 
+echo 'NEWBORN_IP='$NEWBORN_IP
 echo 'NEWBORN_SSH_PORT='$NEWBORN_SSH_PORT
+echo 'NEWBORN_SSH_KEY_PATH='$NEWBORN_SSH_KEY_PATH
+echo 'NEWBORN_USER='$NEWBORN_USER
 echo 'NEWBORN_USER_PASSWORD='$NEWBORN_USER_PASSWORD
 echo 'NEWBORN_HOSTNAME='$NEWBORN_HOSTNAME
 
