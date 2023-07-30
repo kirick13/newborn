@@ -30,18 +30,19 @@ OCI_PLATFORM='none'
 OCI_COMPOSE='n'
 K8S=''
 # output
+OUT_EXPORT_PATH=''
 OUT_INVENTORY_PATH=''
 OUT_SSH_KEY_PATH=''
 
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		# connection
-		-h|--ip)
+		--ip|-h)
 			IP=$2
 			shift
 			shift
 			;;
-		-p|--password)
+		--password|-p)
 			PASSWORD=$2
 			shift
 			shift
@@ -57,7 +58,7 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 		# setup
-		-n|--name)
+		--name|-n)
 			SERVER_NAME=$2
 			shift
 			shift
@@ -67,7 +68,7 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
-		-u|--user)
+		--user|-u)
 			NEW_USER_NAME=$2
 			shift
 			shift
@@ -108,6 +109,11 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 		# output
+		--export)
+			OUT_EXPORT_PATH=$2
+			shift
+			shift
+			;;
 		--append-inventory)
 			OUT_INVENTORY_PATH=$2
 			shift
@@ -151,6 +157,7 @@ while [[ $# -gt 0 ]]; do
 			echo '  --microk8s                  Install MicroK8s'
 			echo
 			echo 'Output options:'
+			echo '  --export <path>             Create bash file with environment variables'
 			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
 			echo '  --copy-ssh-key <path>       Copy SSH key to file'
 			echo
@@ -232,7 +239,10 @@ source $RUN_DIRECTORY/output/return.bash
 echo
 newborn_say 'Setup complete!'
 
-export NEWBORN_IP=$IP
+if [ "$OUT_EXPORT_PATH" != '' ]; then
+	echo '#!/bin/bash' > $OUT_EXPORT_PATH
+	echo 'export NEWBORN_IP="'$IP'"' >> $OUT_EXPORT_PATH
+fi
 
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	if [ "$SSH_KEY_GENERATE" = 'y' ]; then
@@ -249,20 +259,29 @@ if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	cat $RUN_DIRECTORY/output/inventory >> $OUT_INVENTORY_PATH
 	newborn_say 'Inventory appended to '$OUT_INVENTORY_PATH
 else
-	export NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
+	if [ "$OUT_EXPORT_PATH" != '' ]; then
+		NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
+		echo 'export NEWBORN_SSH_PORT="'$NEWBORN_SSH_PORT'"' >> $OUT_EXPORT_PATH
+	fi
 fi
 
 if [ "$OUT_SSH_KEY_PATH" != '' ]; then
 	cp $RUN_DIRECTORY/output/ssh_key $OUT_SSH_KEY_PATH
 	chmod 600 $OUT_SSH_KEY_PATH
 	# newborn_say 'SSH key copied to '$OUT_SSH_KEY_PATH
-	export NEWBORN_SSH_KEY_PATH=$OUT_SSH_KEY_PATH
+	if [ "$OUT_EXPORT_PATH" != '' ]; then
+		echo 'export NEWBORN_SSH_KEY_PATH="'"$(normalpath $OUT_SSH_KEY_PATH)"'"' >> $OUT_EXPORT_PATH
+	fi
 else
-	export NEWBORN_SSH_KEY_PATH=$(normalpath $SSH_KEY_PATH)
+	if [ "$OUT_EXPORT_PATH" != '' ]; then
+		echo 'export NEWBORN_SSH_KEY_PATH="'"$(normalpath $SSH_KEY_PATH)"'"' >> $OUT_EXPORT_PATH
+	fi
 fi
 
-export NEWBORN_USER=$NEW_USER_NAME
-export NEWBORN_USER_PASSWORD
-export NEWBORN_HOSTNAME
+if [ "$OUT_EXPORT_PATH" != '' ]; then
+	echo 'export NEWBORN_USER="'$NEW_USER_NAME'"' >> $OUT_EXPORT_PATH
+	echo 'export NEWBORN_USER_PASSWORD="'$NEWBORN_USER_PASSWORD'"' >> $OUT_EXPORT_PATH
+	echo 'export NEWBORN_HOSTNAME="'$NEWBORN_HOSTNAME'"' >> $OUT_EXPORT_PATH
+fi
 
 rm -rf $RUN_DIRECTORY > /dev/null
