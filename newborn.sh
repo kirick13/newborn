@@ -144,11 +144,11 @@ while [[ $# -gt 0 ]]; do
 			echo 'Setup options:'
 			echo '  --name, -n <name>           Server name to use in Bash prompt; default: "server"'
 			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.)'
-			echo '  --user, -u <name>           New user name (default: "user")'
+			echo '  --user, -u <name>           New user name (defaults to 7-character random string)'
 			echo '  --user-sudo                 Add the user to sudoers'
 			echo '  --ask-new-password          Ask for new user password; otherwise random password will be generated'
 			echo '  --ssh-key <path>            Path to new SSH key; otherwise it will be generated'
-			echo '  --firewall                  Setup UFW firewall'
+			echo '  --firewall                  Setup iptables'
 			echo
 			echo 'Sowtware options:'
 			echo '  --docker                    Install Docker'

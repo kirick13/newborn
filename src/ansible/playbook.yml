@@ -48,9 +48,31 @@
         - curl
         - python3
         - vim
-        - ufw
+        - iptables-persistent
         - cron
       lock_timeout: 600
+
+  - name: Copy the iptables update script
+    copy:
+      src: ../scripts/iptables.sh
+      dest: /root/iptables.sh
+      owner: root
+      group: root
+      mode: '0755'
+    when: newborn_firewall == "y"
+
+  - name: Execute the iptables update script
+    shell: /root/iptables.sh
+    when: newborn_firewall == "y"
+
+  - name: Create a cron job to run the iptables update script
+    cron:
+      name: Update iptables rules
+      user: root
+      minute: '0'
+      hour: '3'
+      job: '/root/iptables.sh >/dev/null 2>&1'
+    when: newborn_firewall == "y"
 
   - name: Copy .bashrc file
     copy:
@@ -217,25 +239,3 @@
     service:
       name: sshd
       state: restarted
-
-  - name: Copy the UFW update script
-    copy:
-      src: ../scripts/ufw.sh
-      dest: /root/ufw.sh
-      owner: root
-      group: root
-      mode: '0755'
-    when: newborn_firewall == "y"
-
-  - name: Create a cron job to run the UFW update script
-    cron:
-      name: Update UFW rules
-      user: root
-      minute: '0'
-      hour: '3'
-      job: '/root/ufw.sh >/dev/null 2>&1'
-    when: newborn_firewall == "y"
-
-  - name: Apply UFW rules
-    shell: /root/ufw.sh
-    when: newborn_firewall == "y"
