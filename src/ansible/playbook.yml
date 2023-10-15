@@ -239,3 +239,7 @@
     service:
       name: sshd
       state: restarted
+
+  - name: Execute the iptables update script to reflect changes in SSH port
+    shell: /root/iptables.sh
+    when: newborn_firewall == "y"
