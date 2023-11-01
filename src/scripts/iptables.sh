@@ -9,8 +9,11 @@ remove_ufw () {
         ufw --force disable
     fi
 
-    iptables -S | grep -e '-A' | grep -e ' ufw-' | sed -e 's/-A/-D/' | while read -r line; do sudo iptables $line; done
-    iptables -S | grep -e '-N' | grep -e ' ufw-' | sed -e 's/-N/-X/' | while read -r line; do sudo iptables $line; done
+    iptables -S | grep -e '-A' | grep -e ' ufw-' | sed -e 's/-A/-D/' | while read -r line; do iptables $line; done
+    iptables -S | grep -e '-N' | grep -e ' ufw-' | sed -e 's/-N/-X/' | while read -r line; do iptables $line; done
+
+    ip6tables -S | grep -e '-A' | grep -e ' ufw6-' | sed -e 's/-A/-D/' | while read -r line; do ip6tables $line; done
+    ip6tables -S | grep -e '-N' | grep -e ' ufw6-' | sed -e 's/-N/-X/' | while read -r line; do ip6tables $line; done
 }
 
 call_iptables () {
@@ -64,6 +67,8 @@ link_chain () {
     # Link chain to the INPUT chain
     call_iptables -D INPUT -j $CHAIN
     call_iptables -I INPUT -j $CHAIN
+
+    # Link chain to the FORWARD chain
     call_iptables -D FORWARD -j $CHAIN
     call_iptables -I FORWARD -j $CHAIN
 
@@ -81,6 +86,7 @@ link_chain () {
 remove () {
     call_iptables -F $CHAIN
     call_iptables -D INPUT -j $CHAIN
+    call_iptables -D FORWARD -j $CHAIN
 
     # Unlink chain from DOCKER-USER
     if iptables -L DOCKER-USER -n >/dev/null 2>&1; then
