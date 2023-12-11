@@ -36,9 +36,11 @@ create_chain () {
 
     # Allow all access on local networks
     iptables  -A $CHAIN -s '10.0.0.0/8'     -j RETURN
+    iptables  -A $CHAIN -s '169.254.0.0/16' -j RETURN
     iptables  -A $CHAIN -s '172.16.0.0/12'  -j RETURN
     iptables  -A $CHAIN -s '192.168.0.0/16' -j RETURN
     ip6tables -A $CHAIN -s 'fc00::/7'       -j RETURN
+    ip6tables -A $CHAIN -s 'fe80::/10'      -j RETURN
 
     # Allow ssh connections
     SSH_PORT=$(grep '^Port ' /etc/ssh/sshd_config | cut -d ' ' -f2)
