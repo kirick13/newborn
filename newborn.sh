@@ -143,7 +143,7 @@ while [[ $# -gt 0 ]]; do
 			echo
 			echo 'Setup options:'
 			echo '  --name, -n <name>           Server name to use in Bash prompt; default: "server"'
-			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.)'
+			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.). By default, swap will be disabled.'
 			echo '  --user, -u <name>           New user name (defaults to 7-character random string)'
 			echo '  --user-sudo                 Add the user to sudoers'
 			echo '  --ask-new-password          Ask for new user password; otherwise random password will be generated'

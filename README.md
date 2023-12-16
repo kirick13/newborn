@@ -76,8 +76,9 @@ git clone https://github.com/kirick13/newborn.git
 
 | Option | Description |
 | - | - |
+| `--export <path>` | Create bash file with return variables such as new hostname, user, password etc. <br> To import that variables, run `source <path>`. |
 | `--append-inventory <path>` | Append processed host to Ansible inventory. |
-| `--copy-ssh-key <path>` | Copy SSH key to file. |
+| `--copy-ssh-key <path>` | Path to save generated SSH key. |
 
 ## TODO:
 
