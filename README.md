@@ -61,7 +61,7 @@ git clone https://github.com/kirick13/newborn.git
 | `--user-sudo` | Add the user to sudoers. |
 | `--ask-new-password` | Ask for new user password; otherwise random password will be generated. |
 | `--ssh-key <path>` | Path to new SSH key; otherwise it will be generated. |
-| `--firewall` | Enable UFW rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 for Cloudflare. To change rules, edit `/root/ufw.sh` script on your server. Cron will re-apply UFW rules every day at 3 AM to maintain actual Cloudflare IPs. |
+| `--firewall` | Enable iptables rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 from Cloudflare. To change rules, edit `/root/iptables.sh` script on your server. Cron will re-apply iptables rules every day at 3 AM to maintain actual Cloudflare IPs. |
 
 #### Software options
 
