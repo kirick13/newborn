@@ -61,9 +61,9 @@ git clone https://github.com/kirick13/newborn.git
 | `--user-sudo` | Add the user to sudoers. |
 | `--ask-new-password` | Ask for new user password; otherwise random password will be generated. |
 | `--ssh-key <path>` | Path to new SSH key; otherwise it will be generated. |
-| `--firewall` | Enable UFW rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 for Cloudflare. To change rules, edit `/root/ufw.sh` script on your server. Cron will re-apply UFW rules every day at 3 AM to maintain actual Cloudflare IPs. |
+| `--firewall` | Enable iptables rules. <br> That will disable all incoming connections except current SSH port and ports 80 and 443 from Cloudflare. To change rules, edit `/root/iptables.sh` script on your server. Cron will re-apply iptables rules every day at 3 AM to maintain actual Cloudflare IPs. |
 
-#### Sowtware options
+#### Software options
 
 | Option | Description |
 | - | - |
@@ -76,9 +76,9 @@ git clone https://github.com/kirick13/newborn.git
 
 | Option | Description |
 | - | - |
+| `--export <path>` | Create bash file with return variables such as new hostname, user, password etc. <br> To import that variables, run `source <path>`. |
 | `--append-inventory <path>` | Append processed host to Ansible inventory. |
-| `--print-password` | Print new user password to stdout. |
-| `--copy-ssh-key <path>` | Copy SSH key to file. |
+| `--copy-ssh-key <path>` | Path to save generated SSH key. |
 
 ## TODO:
 

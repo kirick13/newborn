@@ -5,14 +5,13 @@ newborn_say () {
 
 echo
 
-NEWBORN_HOSTNAME='host-'$(tr -dc a-f0-9 < /dev/urandom | head -c 8)
+NEWBORN_HOSTNAME='host-'$(LC_ALL=C tr -dc a-z0-9 < /dev/urandom | head -c 8)
 
 if [ -z "$NEWBORN_NEW_USER_PASSWORD" ]; then
 	newborn_say 'Generating random password...'
-	NEWBORN_NEW_USER_PASSWORD="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 100)"
+	NEWBORN_NEW_USER_PASSWORD="$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 100)"
 fi
-NEWBORN_NEW_USER_PASSWORD_SALT="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 16)"
-echo $NEWBORN_NEW_USER_PASSWORD > output/password.txt
+NEWBORN_NEW_USER_PASSWORD_SALT="$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 16)"
 
 if [ -f input/ssh_key ]; then
 	newborn_say 'Generating SSH public key from private key...'
@@ -40,6 +39,10 @@ cat input/inventory \
 		echo ${line}" newborn_ssh_port=$SSH_PORT"
 	done \
 	| tee ansible/inventory > /dev/null
+
+touch output/return.bash
+echo 'export NEWBORN_HOSTNAME="'$NEWBORN_HOSTNAME'"' >> output/return.bash
+echo 'export NEWBORN_USER_PASSWORD="'$NEWBORN_NEW_USER_PASSWORD'"' >> output/return.bash
 
 cd ansible
 
