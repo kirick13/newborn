@@ -47,14 +47,14 @@ create_chain () {
     call_iptables -A $CHAIN -p tcp --dport ${SSH_PORT:-22} -j ACCEPT
 
     # Allow access to ports 80 and 443 from Cloudflare
-    CF_IP_RANGES_V4=$(curl -s https://www.cloudflare.com/ips-v4)
+    CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
     for ip in ${CF_IP_RANGES_V4}
     do
         iptables -A $CHAIN -p tcp -s $ip --dport 80  -j RETURN
         iptables -A $CHAIN -p tcp -s $ip --dport 443 -j RETURN
     done
 
-    CF_IP_RANGES_V6=$(curl -s https://www.cloudflare.com/ips-v6)
+    CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
     for ip in ${CF_IP_RANGES_V6}
     do
         ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -j RETURN
