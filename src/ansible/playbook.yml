@@ -21,6 +21,11 @@
       name: "{{ newborn_hostname }}"
       use: systemd
 
+  - name: Add hostname to /etc/hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "127.0.0.1 {{ newborn_hostname }}"
+
   - name: Resize filesystem
     shell: |
       DISK_LABEL=$(df | grep -E '\/$' | awk '{print $1}')
@@ -69,8 +74,8 @@
     cron:
       name: Update iptables rules
       user: root
-      minute: '0'
-      hour: '3'
+      minute: '{{ 60 | random }}'
+      hour: '{{ 24 | random }}'
       job: '/root/iptables.sh >/dev/null 2>&1'
     when: newborn_firewall == "y"
 

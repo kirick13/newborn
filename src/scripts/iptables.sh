@@ -42,6 +42,13 @@ create_chain () {
     ip6tables -A $CHAIN -s 'fc00::/7'       -j RETURN
     ip6tables -A $CHAIN -s 'fe80::/10'      -j RETURN
 
+    # Allow IPv6 networking
+    IPV6_SUBNETS=$(ip a | grep inet6 | awk '{print $2}')
+    for ip in ${IPV6_SUBNETS}
+    do
+        ip6tables -A $CHAIN -s $ip -j RETURN
+    done
+
     # Allow ssh connections
     SSH_PORT=$(grep '^Port ' /etc/ssh/sshd_config | cut -d ' ' -f2)
     call_iptables -A $CHAIN -p tcp --dport ${SSH_PORT:-22} -j ACCEPT
