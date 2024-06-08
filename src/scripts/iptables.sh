@@ -41,6 +41,7 @@ create_chain () {
     iptables  -A $CHAIN -s '192.168.0.0/16' -j RETURN
     ip6tables -A $CHAIN -s 'fc00::/7'       -j RETURN
     ip6tables -A $CHAIN -s 'fe80::/10'      -j RETURN
+    ip6tables -A $CHAIN -s 'ff00::/8'       -j RETURN
 
     # Allow IPv6 networking
     IPV6_SUBNETS=$(ip a | grep inet6 | awk '{print $2}')
@@ -57,15 +58,14 @@ create_chain () {
     CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
     for ip in ${CF_IP_RANGES_V4}
     do
-        iptables -A $CHAIN -p tcp -s $ip --dport 80  -j RETURN
-        iptables -A $CHAIN -p tcp -s $ip --dport 443 -j RETURN
+        iptables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
+        iptables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
     done
-
     CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
     for ip in ${CF_IP_RANGES_V6}
     do
-        ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -j RETURN
-        ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -j RETURN
+        ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
+        ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
     done
 
     # Drop all other traffic
@@ -92,6 +92,11 @@ link_chain () {
     fi
 }
 
+apply () {
+    create_chain
+    link_chain
+}
+
 remove () {
     call_iptables -F $CHAIN
     call_iptables -D INPUT -j $CHAIN
@@ -108,6 +113,17 @@ remove () {
     call_iptables -X $CHAIN
 }
 
+fix () {
+    IPV4_CLOUDFLARE_LINES=$(iptables -S | grep -e '-A' | grep -e ' --comment Cloudflare -j ' | wc -l)
+    IPV6_CLOUDFLARE_LINES=$(ip6tables -S | grep -e '-A' | grep -e ' --comment Cloudflare -j ' | wc -l)
+    if [ $IPV4_CLOUDFLARE_LINES -eq 0 ] || [ $IPV6_CLOUDFLARE_LINES -eq 0 ]; then
+        echo 'Cloudflare rules not found, reapplying...'
+        apply
+    else
+        echo 'Cloudflare rules are here, nothing to fix.'
+    fi
+}
+
 if [ "$1" = 'remove_ufw' ]; then
     remove_ufw
 elif [ "$1" = 'remove' ]; then
@@ -116,9 +132,10 @@ elif [ "$1" = 'remove' ]; then
     fi
 
     remove
+elif [ "$1" = 'fix' ]; then
+    fix
 elif [ "$1" = '' ]; then
-    create_chain
-    link_chain
+    apply
 else
     echo 'Unknown argument '$1
     exit 1

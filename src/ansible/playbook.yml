@@ -70,13 +70,21 @@
     shell: /root/iptables.sh
     when: newborn_firewall == "y"
 
-  - name: Create a cron job to run the iptables update script
+  - name: Create a cron job to apply iptables
     cron:
       name: Update iptables rules
       user: root
       minute: '{{ 60 | random }}'
       hour: '{{ 24 | random }}'
       job: '/root/iptables.sh >/dev/null 2>&1'
+    when: newborn_firewall == "y"
+
+  - name: Create a cron job to fix iptables
+    cron:
+      name: Lookup iptables rules and fix if needed
+      user: root
+      minute: '/5'
+      job: '/root/iptables.sh fix >/dev/null 2>&1'
     when: newborn_firewall == "y"
 
   - name: Copy .bashrc file
