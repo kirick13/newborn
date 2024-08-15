@@ -74,8 +74,8 @@
     cron:
       name: Update iptables rules
       user: root
-      minute: '{{ 60 | random }}'
-      hour: '{{ 24 | random }}'
+      minute: '{{ 59 | random }}'
+      hour: '{{ 23 | random }}'
       job: '/root/iptables.sh >/dev/null 2>&1'
     when: newborn_firewall == "y"
 
