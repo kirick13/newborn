@@ -34,8 +34,6 @@
       unset DISK_LABEL
 
   - name: Set UTC timezone
-    args:
-      warn: false
     shell: |
       ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
       dpkg-reconfigure --frontend noninteractive tzdata
@@ -249,9 +247,10 @@
       line: "Port {{ newborn_ssh_port }}"
 
   - name: Restart OpenSSH server
-    service:
-      name: sshd
+    systemd_service:
+      name: ssh
       state: restarted
+      daemon_reload: true
 
   - name: Execute the iptables update script to reflect changes in SSH port
     shell: /root/iptables.sh
