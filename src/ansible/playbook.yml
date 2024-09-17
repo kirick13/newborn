@@ -165,14 +165,14 @@
       lock_timeout: 600
     when: newborn_oci_platform == "podman"
 
-  - name: Install Pip3
-    apt:
-      name: python3-pip
-      lock_timeout: 600
-    when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
+  # - name: Install Pip3
+  #   apt:
+  #     name: python3-pip
+  #     lock_timeout: 600
+  #   when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
 
   - name: Install Podman Compose
-    pip:
+    apt:
       name: podman-compose
     when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
 

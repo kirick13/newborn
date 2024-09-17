@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 newborn_say () {
 	echo '[NEWBORN] '$1
@@ -30,6 +30,7 @@ OCI_PLATFORM='none'
 OCI_COMPOSE='n'
 K8S=''
 # output
+OUT_PRINT='n'
 OUT_EXPORT_PATH=''
 OUT_INVENTORY_PATH=''
 OUT_SSH_KEY_PATH=''
@@ -109,6 +110,10 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 		# output
+		--print)
+			OUT_PRINT='y'
+			shift
+			;;
 		--export)
 			OUT_EXPORT_PATH=$2
 			shift
@@ -157,6 +162,7 @@ while [[ $# -gt 0 ]]; do
 			echo '  --microk8s                  Install MicroK8s'
 			echo
 			echo 'Output options:'
+			echo '  --print                     Print results to stdout'
 			echo '  --export <path>             Create bash file with environment variables'
 			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
 			echo '  --copy-ssh-key <path>       Copy SSH key to file'
@@ -244,6 +250,8 @@ if [ "$OUT_EXPORT_PATH" != '' ]; then
 	echo 'export NEWBORN_IP="'$IP'"' >> $OUT_EXPORT_PATH
 fi
 
+NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
+
 if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	if [ "$SSH_KEY_GENERATE" = 'y' ]; then
 		SAVED_SSH_KEY_PATH=$OUT_SSH_KEY_PATH
@@ -260,7 +268,6 @@ if [ "$OUT_INVENTORY_PATH" != '' ]; then
 	newborn_say 'Inventory appended to '$OUT_INVENTORY_PATH
 else
 	if [ "$OUT_EXPORT_PATH" != '' ]; then
-		NEWBORN_SSH_PORT=$(cat $RUN_DIRECTORY/output/inventory | grep ansible_ssh_port | cut -d'=' -f2)
 		echo 'export NEWBORN_SSH_PORT="'$NEWBORN_SSH_PORT'"' >> $OUT_EXPORT_PATH
 	fi
 fi
@@ -285,3 +292,14 @@ if [ "$OUT_EXPORT_PATH" != '' ]; then
 fi
 
 rm -rf $RUN_DIRECTORY > /dev/null
+
+if [ "$OUT_PRINT" == 'y' ]; then
+    echo
+    echo 'Setup results:'
+    echo '  IP:            '$IP
+    echo '  SSH Port:      '$NEWBORN_SSH_PORT
+    echo '  Hostname:      '$NEWBORN_HOSTNAME
+    echo '  User:          '$NEW_USER_NAME
+    echo '  User Password: '$NEWBORN_USER_PASSWORD
+    echo
+fi
