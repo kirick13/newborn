@@ -15,6 +15,7 @@ mkdir -p $RUN_DIRECTORY > /dev/null
 
 # connection
 IP=''
+PORT=''
 PASSWORD=''
 CONN_SSH_KEY_PATH=''
 # setup
@@ -43,7 +44,12 @@ while [[ $# -gt 0 ]]; do
 			shift
 			shift
 			;;
-		--password|-p)
+		--port|-p)
+			PORT=$2
+			shift
+			shift
+			;;
+		--password)
 			PASSWORD=$2
 			shift
 			shift
@@ -136,24 +142,27 @@ while [[ $# -gt 0 ]]; do
 		# other
 		--help)
 			echo
-			echo 'Newborn setups new server with dockerized Ansible.'
+			echo 'Newborn configures Ubuntu server.'
 			echo
 			echo 'Usage: ./newborn.sh [options]'
 			echo
 			echo 'Connection options:'
 			echo '  --ip, -h <ip>               IP address of the server'
-			echo '  --password, -p <password>   Root user'"'"'s password'
+			echo '  --port, -p <port>           SSH port; default: 22'
+			echo '  --password <password>       Root user'"'"'s password'
 			echo '  --password-stdin            Read root user'"'"'s password from stdin'
-			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to server'
+			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to the server'
 			echo
 			echo 'Setup options:'
 			echo '  --name, -n <name>           Server name to use in Bash prompt; default: "server"'
-			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", "2G", "4G", etc.). By default, swap will be disabled.'
-			echo '  --user, -u <name>           New user name (defaults to 7-character random string)'
+			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", etc.). If not specified, swap will be disabled'
+			echo '  --user, -u <name>           New user name. If not specified, it will be 7-character random string'
 			echo '  --user-sudo                 Add the user to sudoers'
-			echo '  --ask-new-password          Ask for new user password; otherwise random password will be generated'
-			echo '  --ssh-key <path>            Path to new SSH key; otherwise it will be generated'
-			echo '  --firewall                  Setup iptables'
+			echo '  --ask-new-password          Ask for new user password. If not specified, random password will be generated'
+			echo '  --ssh-key <path>            Path to new SSH key. If not specified, it will be generated'
+			echo '  --firewall                  Setup iptables. This will disable all traffic from the public networks'
+			echo '                              to any ports with exception for SSH server and 80/443 from Cloudflare.'
+			echo '                              To edit rules, change /root/iptables.sh file'
 			echo
 			echo 'Sowtware options:'
 			echo '  --docker                    Install Docker'
@@ -185,15 +194,21 @@ mkdir -p $RUN_DIRECTORY/input > /dev/null
 mkdir -p $RUN_DIRECTORY/output > /dev/null
 
 INVENTORY_FILE="$RUN_DIRECTORY/input/inventory"
+INVENTORY_LINE="$IP"
+if [ ! -z "$PORT" ]; then
+	INVENTORY_LINE="$INVENTORY_LINE ansible_ssh_port=$PORT"
+fi
+
 if [ ! -z "$PASSWORD" ]; then
-	echo "$IP ansible_ssh_pass=$PASSWORD" > $INVENTORY_FILE
+	INVENTORY_LINE="$INVENTORY_LINE ansible_ssh_pass=$PASSWORD"
 	CONN_SSH_KEY_PATH='/tmp/nothing'
 elif [ ! -z "$CONN_SSH_KEY_PATH" ]; then
-	echo "$IP ansible_ssh_private_key_file=/app/input/ssh.private.key" > $INVENTORY_FILE
+	INVENTORY_LINE="$INVENTORY_LINE ansible_ssh_private_key_file=/app/input/ssh.private.key"
 else
 	newborn_say 'Error: neither password nor SSH private key provided.'
 	exit 1
 fi
+echo "$INVENTORY_LINE" > "$INVENTORY_FILE"
 
 if [ -z "$SSH_KEY_PATH" ]; then
 	if [ -z "$OUT_SSH_KEY_PATH" ]; then
