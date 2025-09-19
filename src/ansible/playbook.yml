@@ -55,6 +55,10 @@
         - cron
       lock_timeout: 600
 
+  # --------------------
+  # |     FIREWALL     |
+  # --------------------
+
   - name: Copy the iptables update script
     copy:
       src: ../scripts/iptables.sh
@@ -112,6 +116,46 @@
       line: 'MYHOSTNAME="{{ newborn_server_name_global }}"'
     when: newborn_server_name is not defined
 
+  # -----------------------
+  # |     REMOVE SNAP     |
+  # -----------------------
+
+  - name: Remove all installed snaps
+    script: ../scripts/remove_snap.sh
+    when: newborn_remove_snap == "y"
+
+  - name: Stop snap services
+    service:
+      name: "{{ item }}"
+      state: stopped
+      enabled: false
+    loop:
+      - snapd.socket
+      - snapd
+    when: newborn_remove_snap == "y"
+
+  - name: Remove snap package itself
+    apt:
+      name: snapd
+      state: absent
+      purge: yes
+      autoremove: yes
+      update_cache: yes
+    when: newborn_remove_snap == "y"
+
+  - name: Clean up snap data
+    file:
+      path: "{{ item }}"
+      state: absent
+    loop:
+      - /var/cache/snapd
+      - "{{ ansible_env.HOME }}/snap"
+    when: newborn_remove_snap == "y"
+
+  # ------------------
+  # |     DOCKER     |
+  # ------------------
+
   - name: Add Docker apt repository key
     get_url:
       url: https://download.docker.com/linux/ubuntu/gpg
@@ -159,22 +203,67 @@
       mode: '0755'
     when: newborn_oci_platform == "docker" and newborn_oci_compose == "y"
 
+  # ------------------
+  # |     PODMAN     |
+  # ------------------
+
   - name: Install Podman
     apt:
       name: podman
       lock_timeout: 600
     when: newborn_oci_platform == "podman"
 
-  # - name: Install Pip3
-  #   apt:
-  #     name: python3-pip
-  #     lock_timeout: 600
-  #   when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
-
   - name: Install Podman Compose
     apt:
       name: podman-compose
     when: newborn_oci_platform == "podman" and newborn_oci_compose == "y"
+
+  # ---------------
+  # |     K0S     |
+  # ---------------
+
+  - name: Download k0s binary
+    get_url:
+      url: https://get.k0s.sh
+      dest: /tmp/k0s-install.sh
+      mode: '0755'
+    when: newborn_k8s == "k0s"
+
+  - name: Run k0s installer script
+    command: /tmp/k0s-install.sh
+    when: newborn_k8s == "k0s"
+
+  - name: Remove k0s installer script
+    file:
+      path: /tmp/k0s-install.sh
+      state: absent
+    when: newborn_k8s == "k0s"
+
+  - name: Make directory for k0s configuration
+    file:
+      path: /etc/k0s
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+    when: newborn_k8s == "k0s"
+
+  - name: Create k0s configuration file
+    shell: |
+      k0s config create > /etc/k0s/k0s.yaml
+    when: newborn_k8s == "k0s"
+
+  # > sudo k0s install controller -c /etc/k0s/k0s.yaml --enable-worker --kubelet-extra-args="--node-ip=10.92.0.2 --address=10.92.0.2" && sudo k0s start
+  # > sudo k0s kubeconfig admin > ~/.kube/config
+  # > kubectl get nodes -o wide -w
+  # > sudo k0s token create --role=worker
+  #
+  # on worker:
+  # > sudo k0s install worker --token-file .token --kubelet-extra-args="--node-ip=10.92.0.3 --address=10.92.0.3" && sudo k0s start
+
+  # --------------------
+  # |     MICROK8S     |
+  # --------------------
 
   - name: Install Snap
     apt:
@@ -184,8 +273,13 @@
     when: newborn_k8s == "microk8s"
 
   - name: Install MicroK8S
-    shell: snap install microk8s --classic
+    shell: |
+      snap install microk8s --classic
     when: newborn_k8s == "microk8s"
+
+  # -----------------------
+  # |     CREATE USER     |
+  # -----------------------
 
   - name: Create user "{{ newborn_user_name }}"
     user:
@@ -206,6 +300,31 @@
       groups: docker
       append: true
     when: newborn_oci_platform == "docker"
+
+  - name: Create directory ~/.kube
+    file:
+      path: "/home/{{ newborn_user_name }}/.kube"
+      state: directory
+      owner: "{{ newborn_user_name }}"
+      group: "{{ newborn_user_name }}"
+      mode: '0755'
+    when: newborn_k8s == "k0s"
+
+  - name: Create file ~/.kube/config
+    file:
+      path: "/home/{{ newborn_user_name }}/.kube/config"
+      state: touch
+      owner: "{{ newborn_user_name }}"
+      group: "{{ newborn_user_name }}"
+      mode: '0600'
+    when: newborn_k8s == "k0s"
+
+  - name: Add kubectl alias to .bashrc
+    lineinfile:
+      path: /etc/bash.bashrc
+      line: alias kubectl='k0s kubectl --kubeconfig=$HOME/.kube/config'
+      create: yes
+    when: newborn_k8s == "k0s"
 
   - name: Add user "{{ newborn_user_name }}" to group "microk8s"
     user:

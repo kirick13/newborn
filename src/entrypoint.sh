@@ -47,4 +47,4 @@ echo 'export NEWBORN_USER_PASSWORD="'$NEWBORN_NEW_USER_PASSWORD'"' >> output/ret
 cd ansible
 
 newborn_say "Running Ansible playbook..."
-ansible-playbook --extra-vars "newborn_hostname=$NEWBORN_HOSTNAME newborn_server_name_global=$NEWBORN_SERVER_NAME newborn_swap_size=$NEWBORN_SWAP_SIZE newborn_user_name=$NEWBORN_NEW_USER_NAME newborn_user_password=$NEWBORN_NEW_USER_PASSWORD newborn_user_password_salt=$NEWBORN_NEW_USER_PASSWORD_SALT newborn_user_sudo=$NEWBORN_NEW_USER_SUDO newborn_firewall=$NEWBORN_FIREWALL newborn_oci_platform=$NEWBORN_OCI_PLATFORM newborn_oci_compose=$NEWBORN_OCI_COMPOSE newborn_k8s=$NEWBORN_K8S" playbook.yml
+ansible-playbook --extra-vars "newborn_hostname=$NEWBORN_HOSTNAME newborn_server_name_global=$NEWBORN_SERVER_NAME newborn_swap_size=$NEWBORN_SWAP_SIZE newborn_user_name=$NEWBORN_NEW_USER_NAME newborn_user_password=$NEWBORN_NEW_USER_PASSWORD newborn_user_password_salt=$NEWBORN_NEW_USER_PASSWORD_SALT newborn_user_sudo=$NEWBORN_NEW_USER_SUDO newborn_firewall=$NEWBORN_FIREWALL newborn_remove_snap=$NEWBORN_REMOVE_SNAP newborn_oci_platform=$NEWBORN_OCI_PLATFORM newborn_oci_compose=$NEWBORN_OCI_COMPOSE newborn_k8s=$NEWBORN_K8S" playbook.yml

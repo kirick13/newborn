@@ -27,6 +27,7 @@ NEW_USER_PASSWORD=''
 SSH_KEY_PATH=''
 FIREWALL='n'
 # packages
+REMOVE_SNAP='n'
 OCI_PLATFORM='none'
 OCI_COMPOSE='n'
 K8S=''
@@ -59,7 +60,7 @@ while [[ $# -gt 0 ]]; do
 			echo
 			shift
 			;;
-		--ssh-connect-key)
+		--ssh-connect-key|-i)
 			CONN_SSH_KEY_PATH=$2
 			shift
 			shift
@@ -99,6 +100,10 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 		# packages
+		--remove-snap)
+			REMOVE_SNAP='y'
+			shift
+			;;
 		--docker)
 			OCI_PLATFORM='docker'
 			shift
@@ -109,6 +114,10 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--compose)
 			OCI_COMPOSE='y'
+			shift
+			;;
+		--k0s)
+			K8S='k0s'
 			shift
 			;;
 		--microk8s)
@@ -147,34 +156,36 @@ while [[ $# -gt 0 ]]; do
 			echo 'Usage: ./newborn.sh [options]'
 			echo
 			echo 'Connection options:'
-			echo '  --ip, -h <ip>               IP address of the server'
-			echo '  --port, -p <port>           SSH port; default: 22'
-			echo '  --password <password>       Root user'"'"'s password'
-			echo '  --password-stdin            Read root user'"'"'s password from stdin'
-			echo '  --ssh-connect-key <path>    Path to SSH private key to connect to the server'
+			echo '  --ip, -h <ip>                 IP address of the server'
+			echo '  --port, -p <port>             SSH port; default: 22'
+			echo '  --password <password>         Root user'"'"'s password'
+			echo '  --password-stdin              Read root user'"'"'s password from stdin'
+			echo '  --ssh-connect-key, -i <path>  Path to SSH private key to connect to the server'
 			echo
 			echo 'Setup options:'
-			echo '  --name, -n <name>           Server name to use in Bash prompt; default: "server"'
-			echo '  --swap <size>               Swap to add (e.g. "500M", "1G", etc.). If not specified, swap will be disabled'
-			echo '  --user, -u <name>           New user name. If not specified, it will be 7-character random string'
-			echo '  --user-sudo                 Add the user to sudoers'
-			echo '  --ask-new-password          Ask for new user password. If not specified, random password will be generated'
-			echo '  --ssh-key <path>            Path to new SSH key. If not specified, it will be generated'
-			echo '  --firewall                  Setup iptables. This will disable all traffic from the public networks'
-			echo '                              to any ports with exception for SSH server and 80/443 from Cloudflare.'
-			echo '                              To edit rules, change /root/iptables.sh file'
+			echo '  --name, -n <name>             Server name to use in Bash prompt; default: "server"'
+			echo '  --swap <size>                 Swap to add (e.g. "500M", "1G", etc.). If not specified, swap will be disabled'
+			echo '  --user, -u <name>             New user name. If not specified, it will be 7-character random string'
+			echo '  --user-sudo                   Add the user to sudoers'
+			echo '  --ask-new-password            Ask for new user password. If not specified, random password will be generated'
+			echo '  --ssh-key <path>              Path to new SSH key. If not specified, it will be generated'
+			echo '  --firewall                    Setup iptables. This will disable all traffic from the public networks'
+			echo '                                to any ports with exception for SSH server and 80/443 from Cloudflare.'
+			echo '                                To edit rules, change /root/iptables.sh file and run it'
 			echo
-			echo 'Sowtware options:'
-			echo '  --docker                    Install Docker'
-			echo '  --podman                    Install Podman'
-			echo '  --compose                   Install Docker Compose / Podman Compose'
-			echo '  --microk8s                  Install MicroK8s'
+			echo 'Software options:'
+			echo '  --docker                      Install Docker'
+			echo '  --podman                      Install Podman'
+			echo '  --compose                     Install Docker Compose / Podman Compose'
+			echo '  --k0s                         Install k0s'
+			echo '  --microk8s                    Install MicroK8s'
+			echo '  --remove-snap                 Remove Snap'
 			echo
 			echo 'Output options:'
-			echo '  --print                     Print results to stdout'
-			echo '  --export <path>             Create bash file with environment variables'
-			echo '  --append-inventory <path>   Append processed hosts to Ansible inventory'
-			echo '  --copy-ssh-key <path>       Copy SSH key to file'
+			echo '  --print                       Print results to stdout'
+			echo '  --export <path>               Create bash file with environment variables'
+			echo '  --append-inventory <path>     Append processed hosts to Ansible inventory'
+			echo '  --copy-ssh-key <path>         Copy SSH key to file'
 			echo
 			exit 0
 			;;
@@ -229,6 +240,11 @@ else
 	SSH_KEY_PATH_DOCKER='/app/input/ssh_key'
 fi
 
+if [ "$REMOVE_SNAP" = 'y' ] && [ "$K8S" = 'microk8s' ]; then
+	newborn_say 'Conflict: MicroK8s requires snap to be installed, so options /--remove-snap/ and /--microk8s/ are mutually exclusive.'
+	exit 1
+fi
+
 echo
 
 docker build -t local/newborn .
@@ -245,6 +261,7 @@ docker run --interactive \
            -e "NEWBORN_NEW_USER_PASSWORD=$NEW_USER_PASSWORD" \
            -e "NEWBORN_NEW_USER_SUDO=$NEW_USER_SUDO" \
 		   -e "NEWBORN_FIREWALL=$FIREWALL" \
+		   -e "NEWBORN_REMOVE_SNAP=$REMOVE_SNAP" \
            -e "NEWBORN_OCI_PLATFORM=$OCI_PLATFORM" \
            -e "NEWBORN_OCI_COMPOSE=$OCI_COMPOSE" \
 		   -e "NEWBORN_K8S=$K8S" \
