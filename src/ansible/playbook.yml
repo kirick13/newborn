@@ -8,6 +8,22 @@
     shell: dpkg --print-architecture
     register: newborn_arch
 
+  - name: Copy Ghostty terminfo file
+    copy:
+      src: ../configs/ghostty.txt
+      dest: /tmp/ghostty.txt
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Add Ghostty terminfo
+    shell: tic -x /tmp/ghostty.txt
+
+  - name: Delete Ghostty terminfo file
+    file:
+      path: /tmp/ghostty.txt
+      state: absent
+
   - name: Set swap
     script: "../scripts/swap.sh {{ newborn_swap_size }}"
 
@@ -124,15 +140,30 @@
     script: ../scripts/remove_snap.sh
     when: newborn_remove_snap == "y"
 
+  - name: Check if snap-related systemd unit files exist
+    stat:
+      path: "/lib/systemd/system/{{ item.file_name }}"
+    when: newborn_remove_snap == "y"
+    register: snap_unit_stats
+    loop_control:
+      label: "{{ item.name }}"
+    loop:
+      - name: snapd
+        file_name: snapd.service
+      - name: snapd.socket
+        file_name: snapd.socket
+
   - name: Stop snap services
     service:
-      name: "{{ item }}"
+      name: "{{ item.item.name }}"
       state: stopped
       enabled: false
-    loop:
-      - snapd.socket
-      - snapd
-    when: newborn_remove_snap == "y"
+    when:
+      - newborn_remove_snap == "y"
+      - item.stat.exists
+    loop_control:
+      label: "{{ item.item.name }}"
+    loop: "{{ snap_unit_stats.results }}"
 
   - name: Remove snap package itself
     apt:
