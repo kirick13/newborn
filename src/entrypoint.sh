@@ -20,9 +20,7 @@ if [ -f input/ssh_key ]; then
 			   > input/ssh_key.pub
 else
 	newborn_say 'Generating SSH key pair...'
-	ssh-keygen -t ecdsa \
-	           -m PEM \
-	           -b 521 \
+	ssh-keygen -t ed25519 \
 	           -N '' \
 	           -f input/ssh_key \
 	           > /dev/null
