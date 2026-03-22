@@ -69,7 +69,26 @@
         - vim
         - iptables-persistent
         - cron
+        - locales
+      update_cache: true
       lock_timeout: 600
+
+  - name: Generate UTF-8 locale
+    community.general.locale_gen:
+      name: en_US.UTF-8
+      state: present
+
+  - name: Set default locale
+    lineinfile:
+      path: /etc/default/locale
+      regexp: '^LANG='
+      line: 'LANG=en_US.UTF-8'
+
+  - name: Ensure LC_ALL is set
+    lineinfile:
+      path: /etc/default/locale
+      regexp: '^LC_ALL='
+      line: 'LC_ALL=en_US.UTF-8'
 
   # --------------------
   # |     FIREWALL     |
