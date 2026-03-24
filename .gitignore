@@ -1,6 +1,7 @@
-
 .DS_Store
-
-output
+.env
 .run
 export.bash
+node_modules
+output
+*.env

@@ -54,19 +54,8 @@ create_chain () {
     SSH_PORT=$(grep '^Port ' /etc/ssh/sshd_config | cut -d ' ' -f2)
     call_iptables -A $CHAIN -p tcp --dport ${SSH_PORT:-22} -j ACCEPT
 
-    # Allow access to ports 80 and 443 from Cloudflare
-    CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
-    for ip in ${CF_IP_RANGES_V4}
-    do
-        iptables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-        iptables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-    done
-    CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
-    for ip in ${CF_IP_RANGES_V6}
-    do
-        ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-        ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-    done
+    # BEGIN ANSIBLE MANAGED BLOCK : HTTP
+    # END ANSIBLE MANAGED BLOCK : HTTP
 
     # Drop all other traffic
     call_iptables -A $CHAIN -j DROP
