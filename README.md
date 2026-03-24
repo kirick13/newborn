@@ -42,3 +42,8 @@ bun run newborn.ts
 ```
 
 CLI will interactively ask you to provide connection options and setup/software options.
+
+## TODO
+
+- save details about new servers to Bitwarden (SSH key, IP, SSH port, username and password);
+  - same for 1Password.

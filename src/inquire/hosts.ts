@@ -169,6 +169,10 @@ export async function inquireHosts() {
 		if (generate_ssh_key) {
 			ssh_key_private = sshpk.generatePrivateKey('ed25519');
 
+			try {
+				await Bun.file(ssh_key_path).unlink();
+			} catch {}
+
 			await Bun.write(ssh_key_path, ssh_key_private.toString('openssh'), {
 				mode: 0o600,
 			});
