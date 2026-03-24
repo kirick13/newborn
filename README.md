@@ -38,7 +38,7 @@ cd newborn
 ### Run it!
 
 ```sh
-./newborn.sh
+bun run newborn.ts
 ```
 
 CLI will interactively ask you to provide connection options and setup/software options.
