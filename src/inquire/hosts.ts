@@ -1,7 +1,7 @@
 // oxlint-disable no-await-in-loop, max-lines-per-function, no-console
 
 import crypto from 'node:crypto';
-// import fs from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import { isIP } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -173,7 +173,10 @@ export async function inquireHosts() {
 				await Bun.file(ssh_key_path).unlink();
 			} catch {}
 
-			await Bun.write(ssh_key_path, ssh_key_private.toString('openssh'), {
+			// await Bun.write(ssh_key_path, ssh_key_private.toString('openssh'), {
+			// 	mode: 0o600,
+			// });
+			await fs.writeFile(ssh_key_path, ssh_key_private.toString('openssh'), {
 				mode: 0o600,
 			});
 		} else {

@@ -26,6 +26,12 @@ export async function inquireSetup() {
 		},
 	});
 
+	const reserve_file = await inquirer.confirm({
+		message:
+			'Do you want to create a 2G disk reserve file? (Can be deleted to free space in emergencies)',
+		default: false,
+	});
+
 	const firewall_http = await inquirer.select({
 		message: 'From where will HTTP/HTTPS traffic be allowed?',
 		choices: [
@@ -37,6 +43,7 @@ export async function inquireSetup() {
 
 	return {
 		swap,
+		reserve_file,
 		firewall_http,
 	};
 }

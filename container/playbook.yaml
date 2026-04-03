@@ -1,25 +1,6 @@
 ---
 
 - hosts: all
-  vars:
-    firewall_http_anywhere: |
-      # Allow access to ports 80 and 443
-      call_iptables -A $CHAIN -p tcp --dport 80 -j ACCEPT
-      call_iptables -A $CHAIN -p tcp --dport 443 -j ACCEPT
-    firewall_http_cloudflare: |
-      # Allow access to ports 80 and 443 from Cloudflare
-      CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
-      for ip in ${CF_IP_RANGES_V4}
-      do
-          iptables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-          iptables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-      done
-      CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
-      for ip in ${CF_IP_RANGES_V6}
-      do
-          ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-          ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-      done
 
   tasks:
 
@@ -75,15 +56,19 @@
     # │   SOME SETUP   │
     # └────────────────┘
 
-    - name: Setup | Set swap
-      shell: "/root/newborn/swap.sh {{ newborn_swap }}"
-
     - name: Setup | Resize filesystem
       shell: |
         DISK_LABEL=$(df | grep -E '\/$' | awk '{print $1}')
         resize2fs $DISK_LABEL
         df -h | grep $DISK_LABEL
         unset DISK_LABEL
+
+    - name: Setup | Set swap
+      shell: "/root/newborn/swap.sh {{ newborn_swap }}"
+
+    - name: Setup | Create disk reserve file
+      command: fallocate -l 2G /disk-space-reserve
+      when: newborn_reserve_file == "y"
 
     - name: Setup | Set UTC timezone
       shell: |
@@ -167,7 +152,22 @@
     - name: Firewall | Update script
       blockinfile:
         path: /root/newborn/iptables.sh
-        block: "{{ firewall_http_cloudflare | indent(width=4, first=True) }}"
+        block: |
+          {% filter indent(width=4, first=true) %}
+          # Allow access to ports 80 and 443 from Cloudflare
+          CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
+          for ip in ${CF_IP_RANGES_V4}
+          do
+              iptables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
+              iptables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
+          done
+          CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
+          for ip in ${CF_IP_RANGES_V6}
+          do
+              ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
+              ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
+          done
+          {% endfilter %}
         marker: "    # {mark} ANSIBLE MANAGED BLOCK : HTTP"
         state: present
       when: newborn_firewall_http == 'cloudflare'
@@ -175,7 +175,12 @@
     - name: Firewall | Update script
       blockinfile:
         path: /root/newborn/iptables.sh
-        block: "{{ firewall_http_anywhere | indent(width=4, first=True) }}"
+        block: |
+          {% filter indent(width=4, first=true) %}
+          # Allow access to ports 80 and 443
+          call_iptables -A $CHAIN -p tcp --dport 80 -j ACCEPT
+          call_iptables -A $CHAIN -p tcp --dport 443 -j ACCEPT
+          {% endfilter %}
         marker: "    # {mark} ANSIBLE MANAGED BLOCK : HTTP"
         state: present
       when: newborn_firewall_http == 'anywhere'

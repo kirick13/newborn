@@ -79,6 +79,7 @@ await exec(
 	JSON.stringify({
 		// setup
 		newborn_swap: setup.swap,
+		newborn_reserve_file: setup.reserve_file ? 'y' : '',
 		newborn_firewall_http: setup.firewall_http,
 		// software
 		newborn_oci_runtime: software.oci_runtime,
