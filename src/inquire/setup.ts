@@ -18,7 +18,7 @@ export async function inquireSetup() {
 				return true;
 			}
 
-			if (/^\d{1,3}(M|G)$/.test(value)) {
+			if (/^\d{1,3}(?:M|G)$/u.test(value)) {
 				return true;
 			}
 
