@@ -3,6 +3,7 @@ package view
 import (
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	card "github.com/kirick13/newborn/components/card"
 	"github.com/kirick13/newborn/components/keys"
@@ -51,7 +52,7 @@ func (v *ConfirmView) Render() string {
 		Render(strings.Join(content, "\n"))
 }
 
-func (v *ConfirmView) OnEnter() {
+func (v *ConfirmView) OnEnter() tea.Cmd {
 	if v.onConfirm != nil {
 		v.onConfirm()
 	}
@@ -59,10 +60,14 @@ func (v *ConfirmView) OnEnter() {
 	if v.Display != nil && v.previous != nil {
 		v.Display.SetCurrentView(v.previous)
 	}
+
+	return nil
 }
 
-func (v *ConfirmView) OnEsc() {
+func (v *ConfirmView) OnEsc() tea.Cmd {
 	if v.Display != nil && v.previous != nil {
 		v.Display.SetCurrentView(v.previous)
 	}
+
+	return nil
 }

@@ -12,9 +12,9 @@ type Display interface {
 
 type View interface {
 	Render() string
-	OnEnter()
-	OnEsc()
-	OnKey(string)
+	OnEnter() tea.Cmd
+	OnEsc() tea.Cmd
+	OnKey(string) tea.Cmd
 	OnMsg(tea.Msg) tea.Cmd
 	SetDisplay(Display)
 	Inputs() []input.Model
@@ -28,9 +28,9 @@ type BaseView struct {
 	focused int
 }
 
-func (v BaseView) OnEnter() {}
-func (v BaseView) OnEsc()   {}
-func (v BaseView) OnKey(string) {}
+func (v BaseView) OnEnter() tea.Cmd { return nil }
+func (v BaseView) OnEsc() tea.Cmd   { return nil }
+func (v BaseView) OnKey(string) tea.Cmd { return nil }
 func (v BaseView) OnMsg(tea.Msg) tea.Cmd { return nil }
 func (v BaseView) Inputs() []input.Model { return v.inputs }
 func (v BaseView) FocusedInput() int     { return v.focused }

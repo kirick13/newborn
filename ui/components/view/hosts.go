@@ -104,18 +104,24 @@ func (v *HostsView) hostLabel(host state.Host) string {
 	return fmt.Sprintf("%s:%d", host.Connect.IP, host.Connect.SSHPort)
 }
 
-func (v *HostsView) OnKey(key string) {
+func (v *HostsView) OnKey(key string) tea.Cmd {
 	if v.Display == nil || v.Display.State() == nil {
-		return
+		return nil
 	}
 
 	switch key {
 	case "a":
-		v.Display.State().AddRandomHost()
-		v.syncTable()
+		v.Display.SetCurrentView(NewHostFormView(v, -1))
+	case "e":
+		if len(v.Display.State().Hosts) == 0 {
+			return nil
+		}
+		v.Display.SetCurrentView(NewHostFormView(v, v.table.Cursor()))
 	case "backspace":
 		v.confirmDelete()
 	}
+
+	return nil
 }
 
 func (v *HostsView) OnMsg(msg tea.Msg) tea.Cmd {

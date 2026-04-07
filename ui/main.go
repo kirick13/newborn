@@ -38,6 +38,8 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var viewCmd tea.Cmd
+	var keyCmd tea.Cmd
+	initialView := m.display.CurrentView
 	if m.display != nil && m.display.CurrentView != nil {
 		viewCmd = m.display.CurrentView.OnMsg(msg)
 	}
@@ -58,16 +60,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.display.MoveFocus(-1)
 			return m, nil
 		case "enter":
-			m.display.CurrentView.OnEnter()
+			keyCmd = m.display.CurrentView.OnEnter()
 		case "esc":
-			m.display.CurrentView.OnEsc()
+			keyCmd = m.display.CurrentView.OnEsc()
 		default:
-			m.display.CurrentView.OnKey(msg.String())
+			keyCmd = m.display.CurrentView.OnKey(msg.String())
 		}
 	}
 
 	if m.display == nil || m.display.CurrentView == nil {
 		return m, viewCmd
+	}
+
+	if initialView != nil && m.display.CurrentView != initialView {
+		return m, tea.Batch(viewCmd, keyCmd)
 	}
 
 	inputs := m.display.CurrentView.Inputs()
@@ -76,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		inputs[i], cmds[i] = inputs[i].Update(msg)
 	}
 
-	cmds = append(cmds, viewCmd)
+	cmds = append(cmds, viewCmd, keyCmd)
 	return m, tea.Batch(cmds...)
 }
 

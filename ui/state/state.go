@@ -98,6 +98,16 @@ func (n *Newborn) DeleteHost(index int) bool {
 	return true
 }
 
+func (n *Newborn) UpsertHost(index int, host Host) int {
+	if index >= 0 && index < len(n.Hosts) {
+		n.Hosts[index] = host
+		return index
+	}
+
+	n.Hosts = append(n.Hosts, host)
+	return len(n.Hosts) - 1
+}
+
 const (
 	alphaNumeric     = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	lowerAlphaNumeric = "1234567890abcdefghijklmnopqrstuvwxyz"
