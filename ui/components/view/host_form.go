@@ -18,6 +18,7 @@ import (
 	"github.com/kirick13/newborn/config"
 	input "github.com/kirick13/newborn/elements"
 	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/style"
 )
 
 type HostFormView struct {
@@ -38,13 +39,6 @@ type sshCheckResultMsg struct {
 }
 
 const rootSSHUser = "root"
-
-var (
-	formLabelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#d4d4d4"))
-	formErrorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#f87171"))
-)
 
 func NewHostFormView(previous *HostsView, editIndex int) *HostFormView {
 	v := &HostFormView{
@@ -76,30 +70,28 @@ func NewHostFormView(previous *HostsView, editIndex int) *HostFormView {
 
 	identityInput := input.New("")
 
-	inputs := []input.Model{
+	if previous != nil && previous.Display != nil && previous.Display.State() != nil &&
+		editIndex >= 0 && editIndex < len(previous.Display.State().Hosts) {
+		host := previous.Display.State().Hosts[editIndex]
+		nameInput.SetValue(host.Setup.Name)
+		ipInput.SetValue(host.Connect.IP)
+		portInput.SetValue(strconv.Itoa(host.Connect.SSHPort))
+		passwordInput.SetValue(host.Connect.Password)
+		identityInput.SetValue(host.Connect.SSHKeyPath)
+	} else {
+		defaults := config.LoadDefaults()
+		nameInput.SetValue(defaults.Name)
+		ipInput.SetValue(defaults.IP)
+		identityInput.SetValue(defaults.SSHKeyPath)
+	}
+
+	v.SetInputs([]input.Element{
 		nameInput,
 		ipInput,
 		portInput,
 		passwordInput,
 		identityInput,
-	}
-
-	if previous != nil && previous.Display != nil && previous.Display.State() != nil &&
-		editIndex >= 0 && editIndex < len(previous.Display.State().Hosts) {
-		host := previous.Display.State().Hosts[editIndex]
-		inputs[0].SetValue(host.Setup.Name)
-		inputs[1].SetValue(host.Connect.IP)
-		inputs[2].SetValue(strconv.Itoa(host.Connect.SSHPort))
-		inputs[3].SetValue(host.Connect.Password)
-		inputs[4].SetValue(host.Connect.SSHKeyPath)
-	} else {
-		defaults := config.LoadDefaults()
-		inputs[0].SetValue(defaults.Name)
-		inputs[1].SetValue(defaults.IP)
-		inputs[4].SetValue(defaults.SSHKeyPath)
-	}
-
-	v.SetInputs(inputs)
+	})
 	return v
 }
 
@@ -124,7 +116,7 @@ func (v *HostFormView) Render() string {
 	if v.statusText != "" {
 		content = append(content, "", v.statusView())
 	} else if v.errorText != "" {
-		content = append(content, "", formErrorStyle.Render(v.errorText))
+		content = append(content, "", style.FormErrorStyle.Render(v.errorText))
 	}
 
 	if !v.checking {
@@ -148,7 +140,7 @@ func (v *HostFormView) renderField(label string, index int) string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		formLabelStyle.Render(label),
+		style.FormLabelStyle.Render(label),
 		inputs[index].Render(),
 	)
 }
@@ -276,7 +268,7 @@ func (v *HostFormView) OnMsg(msg tea.Msg) tea.Cmd {
 	return nil
 }
 
-func (v *HostFormView) Inputs() []input.Model {
+func (v *HostFormView) Inputs() []input.Element {
 	if v.checking {
 		return nil
 	}
@@ -286,7 +278,7 @@ func (v *HostFormView) Inputs() []input.Model {
 
 func (v *HostFormView) statusView() string {
 	if !v.checking {
-		return formErrorStyle.Render(v.statusText)
+		return style.FormErrorStyle.Render(v.statusText)
 	}
 
 	return lipgloss.NewStyle().
@@ -298,7 +290,11 @@ func (v *HostFormView) values() []string {
 	inputs := v.Inputs()
 	values := make([]string, len(inputs))
 	for i := range inputs {
-		values[i] = inputs[i].Value()
+		textInput, ok := inputs[i].(*input.Model)
+		if !ok {
+			continue
+		}
+		values[i] = textInput.Value()
 	}
 	return values
 }

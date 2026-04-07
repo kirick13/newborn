@@ -7,15 +7,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/rivo/uniseg"
+	"github.com/kirick13/newborn/style"
 )
 
 var (
-	focusedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#171717")).
-		Background(lipgloss.Color("#f5f5f5"))
-	blurredStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#171717")).
-		Background(lipgloss.Color("#a3a3a3"))
 	placeholderColor = lipgloss.Color("#525252")
 )
 
@@ -23,7 +18,15 @@ type Model struct {
 	textinput.Model
 }
 
-func New(placeholder string) Model {
+type Element interface {
+	Render() string
+	Focus() tea.Cmd
+	Blur()
+	Focused() bool
+	Update(tea.Msg) (Element, tea.Cmd)
+}
+
+func New(placeholder string) *Model {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.Placeholder = placeholder
@@ -33,22 +36,22 @@ func New(placeholder string) Model {
 	s := ti.Styles()
 	s.Cursor.Color = lipgloss.Color("#2563eb")
 	s.Cursor.Blink = false
-	s.Focused.Text = focusedStyle
-	s.Focused.Placeholder = focusedStyle.Foreground(placeholderColor)
-	s.Blurred.Text = blurredStyle
-	s.Blurred.Placeholder = blurredStyle.Foreground(placeholderColor)
+	s.Focused.Text = style.InputFocusedStyle
+	s.Focused.Placeholder = style.InputFocusedStyle.Foreground(placeholderColor)
+	s.Blurred.Text = style.InputBlurredStyle
+	s.Blurred.Placeholder = style.InputBlurredStyle.Foreground(placeholderColor)
 	ti.SetStyles(s)
 
-	return Model{Model: ti}
+	return &Model{Model: ti}
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (Element, tea.Cmd) {
 	next, cmd := m.Model.Update(msg)
 	m.Model = next
 	return m, cmd
 }
 
-func (m Model) Render() string {
+func (m *Model) Render() string {
 	if m.Focused() {
 		return m.View()
 	}
@@ -68,7 +71,7 @@ func (m Model) Render() string {
 	return content
 }
 
-func (m Model) maskedValue(value string) string {
+func (m *Model) maskedValue(value string) string {
 	switch m.EchoMode {
 	case textinput.EchoPassword:
 		return strings.Repeat(string(m.EchoCharacter), len([]rune(value)))

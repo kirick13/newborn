@@ -37,7 +37,7 @@ func NewDisplay() *Display {
 		height: physicalHeight,
 	}
 
-	d.SetCurrentView(view.NewHostsView())
+	d.SetCurrentView(view.NewSettingsView())
 	return d
 }
 

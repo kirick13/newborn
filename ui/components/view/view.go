@@ -17,14 +17,14 @@ type View interface {
 	OnKey(string) tea.Cmd
 	OnMsg(tea.Msg) tea.Cmd
 	SetDisplay(Display)
-	Inputs() []input.Model
+	Inputs() []input.Element
 	FocusedInput() int
 	SetFocusedInput(int)
 }
 
 type BaseView struct {
 	Display Display
-	inputs  []input.Model
+	inputs  []input.Element
 	focused int
 }
 
@@ -32,14 +32,14 @@ func (v BaseView) OnEnter() tea.Cmd { return nil }
 func (v BaseView) OnEsc() tea.Cmd   { return nil }
 func (v BaseView) OnKey(string) tea.Cmd { return nil }
 func (v BaseView) OnMsg(tea.Msg) tea.Cmd { return nil }
-func (v BaseView) Inputs() []input.Model { return v.inputs }
+func (v BaseView) Inputs() []input.Element { return v.inputs }
 func (v BaseView) FocusedInput() int     { return v.focused }
 
 func (v *BaseView) SetDisplay(display Display) {
 	v.Display = display
 }
 
-func (v *BaseView) SetInputs(inputs []input.Model) {
+func (v *BaseView) SetInputs(inputs []input.Element) {
 	v.inputs = inputs
 }
 
