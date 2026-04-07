@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/rivo/uniseg"
+	"github.com/kirick13/newborn/elements"
 	"github.com/kirick13/newborn/style"
 )
 
@@ -16,14 +17,6 @@ var (
 
 type Model struct {
 	textinput.Model
-}
-
-type Element interface {
-	Render() string
-	Focus() tea.Cmd
-	Blur()
-	Focused() bool
-	Update(tea.Msg) (Element, tea.Cmd)
 }
 
 func New(placeholder string) *Model {
@@ -45,7 +38,7 @@ func New(placeholder string) *Model {
 	return &Model{Model: ti}
 }
 
-func (m *Model) Update(msg tea.Msg) (Element, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (elements.Element, tea.Cmd) {
 	next, cmd := m.Model.Update(msg)
 	m.Model = next
 	return m, cmd

@@ -6,11 +6,12 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	card "github.com/kirick13/newborn/components/card"
+	"github.com/kirick13/newborn/components/card"
 	"github.com/kirick13/newborn/components/keys"
 	"github.com/kirick13/newborn/components/radio_group"
-	input "github.com/kirick13/newborn/elements"
-	checkbox "github.com/kirick13/newborn/elements/checkbox"
+	"github.com/kirick13/newborn/elements"
+	"github.com/kirick13/newborn/elements/input"
+	"github.com/kirick13/newborn/elements/checkbox"
 	"github.com/kirick13/newborn/state"
 	"github.com/kirick13/newborn/style"
 )
@@ -22,7 +23,7 @@ type SettingsView struct {
 }
 
 func NewSettingsView(previous *HostsView) *SettingsView {
-	inputs := []input.Element{}
+	inputs := []elements.Element{}
 
 	swapInput := input.New("100M, 2G etc.")
 	inputs = append(inputs, swapInput)

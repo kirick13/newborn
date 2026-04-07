@@ -16,7 +16,8 @@ import (
 	card "github.com/kirick13/newborn/components/card"
 	"github.com/kirick13/newborn/components/keys"
 	"github.com/kirick13/newborn/config"
-	input "github.com/kirick13/newborn/elements"
+	"github.com/kirick13/newborn/elements"
+	"github.com/kirick13/newborn/elements/input"
 	"github.com/kirick13/newborn/state"
 	"github.com/kirick13/newborn/style"
 )
@@ -85,7 +86,7 @@ func NewHostFormView(previous *HostsView, editIndex int) *HostFormView {
 		identityInput.SetValue(defaults.SSHKeyPath)
 	}
 
-	v.SetInputs([]input.Element{
+	v.SetInputs([]elements.Element{
 		nameInput,
 		ipInput,
 		portInput,
@@ -268,7 +269,7 @@ func (v *HostFormView) OnMsg(msg tea.Msg) tea.Cmd {
 	return nil
 }
 
-func (v *HostFormView) Inputs() []input.Element {
+func (v *HostFormView) Inputs() []elements.Element {
 	if v.checking {
 		return nil
 	}
