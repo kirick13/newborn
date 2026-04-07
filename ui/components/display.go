@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/charmbracelet/x/exp/charmtone"
 	view "github.com/kirick13/newborn/components/view"
+	"github.com/kirick13/newborn/state"
 )
 
 // hasDarkBG = lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
@@ -15,6 +16,7 @@ import (
 
 type Display struct {
 	CurrentView view.View
+	state       *state.Newborn
 	width       int
 	height      int
 }
@@ -23,19 +25,24 @@ var physicalWidth, physicalHeight, _ = term.GetSize(os.Stdout.Fd())
 
 var bgStyle = lipgloss.NewStyle().
 		Foreground(charmtone.Iron).
-		Height(physicalWidth).
-		Width(physicalHeight).
+		Height(physicalHeight).
+		Width(physicalWidth).
 		Align(lipgloss.Center)
 var bgString = makeBg()
 
 func NewDisplay() *Display {
 	d := &Display{
+		state:  state.New(),
 		width:  physicalWidth,
 		height: physicalHeight,
 	}
 
-	d.SetCurrentView(view.NewSpinnerView("starting Shellwarden..."))
+	d.SetCurrentView(view.NewHostsView())
 	return d
+}
+
+func (d *Display) State() *state.Newborn {
+	return d.state
 }
 
 func (d *Display) SetCurrentView(current view.View) {
@@ -125,7 +132,7 @@ func makeBg() string {
 	b := strings.Builder{}
 	for i := range physicalHeight {
 		for range physicalWidth {
-			b.WriteString("/")
+			b.WriteString("⠪")
 		}
 		if i < physicalHeight - 1 {
 			b.WriteString("\n")

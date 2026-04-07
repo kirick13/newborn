@@ -2,10 +2,12 @@ package view
 
 import tea "charm.land/bubbletea/v2"
 import input "github.com/kirick13/newborn/elements"
+import "github.com/kirick13/newborn/state"
 
 type Display interface {
 	SetCurrentView(View)
 	InnerSize() (int, int)
+	State() *state.Newborn
 }
 
 type View interface {
