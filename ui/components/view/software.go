@@ -1,7 +1,7 @@
 package view
 
 import (
-	"encoding/json"
+	"os/exec"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -11,6 +11,7 @@ import (
 	"github.com/kirick13/newborn/components/radio_group"
 	"github.com/kirick13/newborn/elements"
 	"github.com/kirick13/newborn/elements/checkbox"
+	"github.com/kirick13/newborn/provision"
 	"github.com/kirick13/newborn/state"
 	"github.com/kirick13/newborn/style"
 )
@@ -18,11 +19,15 @@ import (
 type SoftwareView struct {
 	BaseView
 	previous                *SettingsView
-	containerRuntimeRadio *radio_group.RadioGroup
-	composeCheckbox       *checkbox.Model
+	containerRuntimeRadio  *radio_group.RadioGroup
+	composeCheckbox        *checkbox.Model
 	kubernetesRuntimeRadio *radio_group.RadioGroup
-	removeSnapCheckbox    *checkbox.Model
-	errorText             string
+	removeSnapCheckbox     *checkbox.Model
+	errorText              string
+}
+
+type dockerFinishedMsg struct {
+	err error
 }
 
 func NewSoftwareView(previous *SettingsView) *SoftwareView {
@@ -123,14 +128,36 @@ func (v *SoftwareView) OnEnter() tea.Cmd {
 
 	v.Display.State().Software = software
 	v.errorText = ""
-	v.Display.SetCurrentView(NewTextView(v, "Debug", buildDebugText(v)))
-	return nil
+	return tea.ExecProcess(
+		buildProvisionCommand(v.Display.State()),
+		func(err error) tea.Msg {
+			return dockerFinishedMsg{err: err}
+		},
+	)
 }
 
 func (v *SoftwareView) OnEsc() tea.Cmd {
 	if v.Display != nil && v.previous != nil {
 		v.Display.SetCurrentView(v.previous)
 	}
+	return nil
+}
+
+func (v *SoftwareView) OnMsg(msg tea.Msg) tea.Cmd {
+	switch msg := msg.(type) {
+	case dockerFinishedMsg:
+		if msg.err != nil {
+			provision.ClearTerminal()
+			return tea.Quit
+		}
+
+		provision.ClearTerminal()
+		if v.Display != nil {
+			v.Display.SetCurrentView(NewBwPasswordView())
+		}
+		return tea.ClearScreen
+	}
+
 	return nil
 }
 
@@ -159,80 +186,7 @@ func (e errSoftware) Error() string {
 	return string(e)
 }
 
-func buildDockerRunCommand(v *SoftwareView) string {
-	payload := struct {
-		NewbornSwap        string `json:"newborn_swap"`
-		NewbornReserveFile string `json:"newborn_reserve_file"`
-		NewbornFirewall    string `json:"newborn_firewall_http"`
-		NewbornOCIRuntime  string `json:"newborn_oci_runtime"`
-		NewbornOCICompose  string `json:"newborn_oci_compose"`
-		NewbornK8sRuntime  string `json:"newborn_k8s_runtime"`
-		NewbornRemoveSnap  string `json:"newborn_remove_snap"`
-	}{
-		NewbornSwap:        v.Display.State().Setup.Swap,
-		NewbornReserveFile: boolToFlag(v.Display.State().Setup.ReserveFile),
-		NewbornFirewall:    v.Display.State().Setup.FirewallHTTP,
-		NewbornOCIRuntime:  v.Display.State().Software.OCIRuntime,
-		NewbornOCICompose:  boolToFlag(v.Display.State().Software.OCICompose),
-		NewbornK8sRuntime:  v.Display.State().Software.K8sRuntime,
-		NewbornRemoveSnap:  boolToFlag(v.Display.State().Software.RemoveSnap),
-	}
-
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		return "docker run -t --rm local/newborn -e '<could not build payload>'"
-	}
-
-	args := []string{
-		"docker",
-		"run",
-		"-t",
-		"--rm",
-	}
-
-	if inventoryPath := strings.TrimSpace(v.Display.State().InventoryPath); inventoryPath != "" {
-		args = append(args, "-v", shellQuoteCommand(inventoryPath+":/app/inventory.yaml:ro"))
-	}
-
-	for _, host := range v.Display.State().Hosts {
-		if strings.TrimSpace(host.Connect.SSHKeyPath) == "" {
-			continue
-		}
-
-		args = append(args,
-			"-v",
-			shellQuoteCommand(host.Connect.SSHKeyPath+":/opt/bind/ssh/"+host.Setup.Name+".key:ro"),
-		)
-	}
-
-	args = append(args,
-		"local/newborn",
-		"-e",
-		shellQuoteCommand(string(jsonPayload)),
-	)
-
-	return strings.Join(args, " ")
-}
-
-func buildDebugText(v *SoftwareView) string {
-	parts := []string{}
-
-	if content := strings.TrimSpace(v.Display.State().InventoryContent); content != "" {
-		parts = append(parts, content)
-	}
-
-	parts = append(parts, buildDockerRunCommand(v))
-	return strings.Join(parts, "\n\n")
-}
-
-func boolToFlag(value bool) string {
-	if value {
-		return "y"
-	}
-
-	return ""
-}
-
-func shellQuoteCommand(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", `'"'"'`) + "'"
+func buildProvisionCommand(app *state.Newborn) *exec.Cmd {
+	cmd := exec.Command("sh", "-lc", provision.BuildProvisionShellScript(app))
+	return cmd
 }

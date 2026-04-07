@@ -169,7 +169,7 @@ func (v *HostFormView) OnEnter() tea.Cmd {
 	v.pending = &host
 	v.checking = true
 	v.errorText = ""
-	v.statusText = "check SSH connection..."
+	v.statusText = "checking SSH connection..."
 	return tea.Batch(v.spinner.Tick, runSSHCheck(host))
 }
 
