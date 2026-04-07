@@ -1,8 +1,12 @@
 package view
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,6 +24,7 @@ import (
 	"github.com/kirick13/newborn/elements/input"
 	"github.com/kirick13/newborn/state"
 	"github.com/kirick13/newborn/style"
+	"golang.org/x/crypto/ssh"
 )
 
 type HostFormView struct {
@@ -230,6 +235,12 @@ func (v *HostFormView) validateAndBuildHost() (state.Host, error) {
 	if v.editIndex >= 0 && v.previous != nil && v.Display != nil && v.Display.State() != nil &&
 		v.editIndex < len(v.Display.State().Hosts) {
 		host.Setup = v.Display.State().Hosts[v.editIndex].Setup
+	} else {
+		setup, err := generateHostSetup(displayName)
+		if err != nil {
+			return state.Host{}, err
+		}
+		host.Setup = setup
 	}
 
 	host.Setup.Name = displayName
@@ -422,4 +433,77 @@ func createAskpassScript(password string) (string, func(), error) {
 
 func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", `'"'"'`) + "'"
+}
+
+func generateHostSetup(displayName string) (state.HostSetup, error) {
+	setup := state.HostSetup{
+		Hostname:      "host-" + randomString(8, lowerAlphaNumeric),
+		Name:          displayName,
+		Username:      randomString(7, lowerAlphaNumeric),
+		Password:      randomString(100, alphaNumeric),
+		PasswordSalt:  randomString(16, alphaNumeric),
+		SSHPort:       randomInt(1025, 65535),
+	}
+
+	privateKey, publicKey, err := generateSSHKeyPair()
+	if err != nil {
+		return state.HostSetup{}, err
+	}
+	setup.SSHPrivateKey = privateKey
+	setup.SSHPublicKey = publicKey
+
+	return setup, nil
+}
+
+func generateSSHKeyPair() (string, string, error) {
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return "", "", fmt.Errorf("could not generate ssh keypair: %w", err)
+	}
+
+	block, err := ssh.MarshalPrivateKey(privateKey, "")
+	if err != nil {
+		return "", "", fmt.Errorf("could not marshal private key: %w", err)
+	}
+
+	privatePEM := string(pem.EncodeToMemory(block))
+
+	publicKey, err := ssh.NewPublicKey(privateKey.Public())
+	if err != nil {
+		return "", "", fmt.Errorf("could not derive public key: %w", err)
+	}
+
+	return privatePEM, strings.TrimSpace(string(ssh.MarshalAuthorizedKey(publicKey))), nil
+}
+
+const (
+	alphaNumeric      = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	lowerAlphaNumeric = "1234567890abcdefghijklmnopqrstuvwxyz"
+)
+
+func randomString(length int, alphabet string) string {
+	if length <= 0 || len(alphabet) == 0 {
+		return ""
+	}
+
+	bytes := make([]byte, length)
+	for i := range bytes {
+		bytes[i] = alphabet[randomInt(0, len(alphabet)-1)]
+	}
+
+	return string(bytes)
+}
+
+func randomInt(minValue, maxValue int) int {
+	if maxValue <= minValue {
+		return minValue
+	}
+
+	size := big.NewInt(int64(maxValue - minValue + 1))
+	value, err := rand.Int(rand.Reader, size)
+	if err != nil {
+		return minValue
+	}
+
+	return minValue + int(value.Int64())
 }

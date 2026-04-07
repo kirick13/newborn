@@ -9,12 +9,15 @@ import (
 	"charm.land/lipgloss/v2"
 	card "github.com/kirick13/newborn/components/card"
 	"github.com/kirick13/newborn/components/keys"
+	"github.com/kirick13/newborn/provision"
 	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/style"
 )
 
 type HostsView struct {
 	BaseView
 	table table.Model
+	errorText string
 }
 
 var (
@@ -71,14 +74,20 @@ func (v *HostsView) Render() string {
 		hostsTitleStyle.Render("Hosts list"),
 		"",
 		v.renderBody(),
-		"",
+	}
+
+	if v.errorText != "" {
+		content = append(content, "", style.FormErrorStyle.Render(v.errorText))
+	}
+
+	content = append(content, "",
 		keys.RenderKeys([]keys.Keys{
 			{Key: "a", Title: "add"},
 			{Key: "e", Title: "edit"},
 			{Key: "backspace", Title: "delete"},
 			{Key: "enter", Title: "next"},
 		}),
-	}
+	)
 
 	return card.New().
 		Padding(1, 2).
@@ -129,6 +138,16 @@ func (v *HostsView) OnEnter() tea.Cmd {
 		return nil
 	}
 
+	content := provision.BuildInventory(v.Display.State().Hosts)
+	path, err := provision.WriteInventoryFile(content)
+	if err != nil {
+		v.errorText = err.Error()
+		return nil
+	}
+
+	v.Display.State().InventoryPath = path
+	v.Display.State().InventoryContent = content
+	v.errorText = ""
 	v.Display.SetCurrentView(NewSettingsView(v))
 	return nil
 }

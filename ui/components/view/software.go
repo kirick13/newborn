@@ -123,7 +123,7 @@ func (v *SoftwareView) OnEnter() tea.Cmd {
 
 	v.Display.State().Software = software
 	v.errorText = ""
-	v.Display.SetCurrentView(NewTextView(v, "Debug", buildDockerRunCommand(v)))
+	v.Display.SetCurrentView(NewTextView(v, "Debug", buildDebugText(v)))
 	return nil
 }
 
@@ -188,12 +188,41 @@ func buildDockerRunCommand(v *SoftwareView) string {
 		"run",
 		"-t",
 		"--rm",
+	}
+
+	if inventoryPath := strings.TrimSpace(v.Display.State().InventoryPath); inventoryPath != "" {
+		args = append(args, "-v", shellQuoteCommand(inventoryPath+":/app/inventory.yaml:ro"))
+	}
+
+	for _, host := range v.Display.State().Hosts {
+		if strings.TrimSpace(host.Connect.SSHKeyPath) == "" {
+			continue
+		}
+
+		args = append(args,
+			"-v",
+			shellQuoteCommand(host.Connect.SSHKeyPath+":/opt/bind/ssh/"+host.Setup.Name+".key:ro"),
+		)
+	}
+
+	args = append(args,
 		"local/newborn",
 		"-e",
 		shellQuoteCommand(string(jsonPayload)),
-	}
+	)
 
 	return strings.Join(args, " ")
+}
+
+func buildDebugText(v *SoftwareView) string {
+	parts := []string{}
+
+	if content := strings.TrimSpace(v.Display.State().InventoryContent); content != "" {
+		parts = append(parts, content)
+	}
+
+	parts = append(parts, buildDockerRunCommand(v))
+	return strings.Join(parts, "\n\n")
 }
 
 func boolToFlag(value bool) string {

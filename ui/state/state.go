@@ -7,9 +7,11 @@ package state
 // )
 
 type Newborn struct {
-	Hosts    []Host
-	Setup    SetupOptions
-	Software SoftwareOptions
+	Hosts            []Host
+	Setup            SetupOptions
+	Software         SoftwareOptions
+	InventoryPath    string
+	InventoryContent string
 }
 
 type Host struct {
@@ -31,7 +33,7 @@ type HostSetup struct {
 	Password     string
 	PasswordSalt string
 	SSHPort      int
-	SSHKeyPath   string
+	SSHPrivateKey string
 	SSHPublicKey string
 }
 
