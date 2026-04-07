@@ -124,6 +124,15 @@ func (v *HostsView) OnKey(key string) tea.Cmd {
 	return nil
 }
 
+func (v *HostsView) OnEnter() tea.Cmd {
+	if v.Display == nil || v.Display.State() == nil || len(v.Display.State().Hosts) == 0 {
+		return nil
+	}
+
+	v.Display.SetCurrentView(NewSettingsView(v))
+	return nil
+}
+
 func (v *HostsView) OnMsg(msg tea.Msg) tea.Cmd {
 	if v.Display == nil || v.Display.State() == nil || len(v.Display.State().Hosts) == 0 {
 		return nil

@@ -1,10 +1,10 @@
 package state
 
-import (
-	"crypto/rand"
-	"fmt"
-	"math/big"
-)
+// import (
+// 	"crypto/rand"
+// 	"fmt"
+// 	"math/big"
+// )
 
 type Newborn struct {
 	Hosts    []Host
@@ -54,7 +54,7 @@ func New() *Newborn {
 		Setup: SetupOptions{
 			Swap:         "",
 			ReserveFile:  false,
-			FirewallHTTP: "anywhere",
+			FirewallHTTP: "nowhere",
 		},
 		Software: SoftwareOptions{
 			OCIRuntime: "",
@@ -65,29 +65,29 @@ func New() *Newborn {
 	}
 }
 
-func (n *Newborn) AddRandomHost() Host {
-	host := Host{
-		Connect: ConnectOptions{
-			IP:         randomIPv4(),
-			SSHPort:    22,
-			Password:   randomString(24, alphaNumeric),
-			SSHKeyPath: "",
-		},
-		Setup: HostSetup{
-			Hostname:     "host-" + randomString(8, lowerAlphaNumeric),
-			Name:         "host-" + randomString(5, lowerAlphaNumeric),
-			Username:     randomString(7, lowerAlphaNumeric),
-			Password:     randomString(32, alphaNumeric),
-			PasswordSalt: randomString(16, alphaNumeric),
-			SSHPort:      randomInt(1025, 65535),
-			SSHKeyPath:   "",
-			SSHPublicKey: "",
-		},
-	}
+// func (n *Newborn) AddRandomHost() Host {
+// 	host := Host{
+// 		Connect: ConnectOptions{
+// 			IP:         randomIPv4(),
+// 			SSHPort:    22,
+// 			Password:   randomString(24, alphaNumeric),
+// 			SSHKeyPath: "",
+// 		},
+// 		Setup: HostSetup{
+// 			Hostname:     "host-" + randomString(8, lowerAlphaNumeric),
+// 			Name:         "host-" + randomString(5, lowerAlphaNumeric),
+// 			Username:     randomString(7, lowerAlphaNumeric),
+// 			Password:     randomString(32, alphaNumeric),
+// 			PasswordSalt: randomString(16, alphaNumeric),
+// 			SSHPort:      randomInt(1025, 65535),
+// 			SSHKeyPath:   "",
+// 			SSHPublicKey: "",
+// 		},
+// 	}
 
-	n.Hosts = append(n.Hosts, host)
-	return host
-}
+// 	n.Hosts = append(n.Hosts, host)
+// 	return host
+// }
 
 func (n *Newborn) DeleteHost(index int) bool {
 	if index < 0 || index >= len(n.Hosts) {
@@ -108,38 +108,38 @@ func (n *Newborn) UpsertHost(index int, host Host) int {
 	return len(n.Hosts) - 1
 }
 
-const (
-	alphaNumeric     = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	lowerAlphaNumeric = "1234567890abcdefghijklmnopqrstuvwxyz"
-)
+// const (
+// 	alphaNumeric     = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+// 	lowerAlphaNumeric = "1234567890abcdefghijklmnopqrstuvwxyz"
+// )
 
-func randomIPv4() string {
-	return fmt.Sprintf("192.168.%d.%d", randomInt(0, 254), randomInt(1, 254))
-}
+// func randomIPv4() string {
+// 	return fmt.Sprintf("192.168.%d.%d", randomInt(0, 254), randomInt(1, 254))
+// }
 
-func randomString(length int, alphabet string) string {
-	if length <= 0 || len(alphabet) == 0 {
-		return ""
-	}
+// func randomString(length int, alphabet string) string {
+// 	if length <= 0 || len(alphabet) == 0 {
+// 		return ""
+// 	}
 
-	bytes := make([]byte, length)
-	for i := range bytes {
-		bytes[i] = alphabet[randomInt(0, len(alphabet)-1)]
-	}
+// 	bytes := make([]byte, length)
+// 	for i := range bytes {
+// 		bytes[i] = alphabet[randomInt(0, len(alphabet)-1)]
+// 	}
 
-	return string(bytes)
-}
+// 	return string(bytes)
+// }
 
-func randomInt(minValue, maxValue int) int {
-	if maxValue <= minValue {
-		return minValue
-	}
+// func randomInt(minValue, maxValue int) int {
+// 	if maxValue <= minValue {
+// 		return minValue
+// 	}
 
-	size := big.NewInt(int64(maxValue - minValue + 1))
-	value, err := rand.Int(rand.Reader, size)
-	if err != nil {
-		return minValue
-	}
+// 	size := big.NewInt(int64(maxValue - minValue + 1))
+// 	value, err := rand.Int(rand.Reader, size)
+// 	if err != nil {
+// 		return minValue
+// 	}
 
-	return minValue + int(value.Int64())
-}
+// 	return minValue + int(value.Int64())
+// }

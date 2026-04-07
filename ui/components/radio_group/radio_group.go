@@ -17,7 +17,7 @@ type Option struct {
 type RadioGroup struct {
 	Options    []Option
 	Inputs     []input.Element
-	Value      string
+	value      string
 	checkboxes []*checkbox.Model
 	lastValues []bool
 }
@@ -28,6 +28,7 @@ func New(options []Option) *RadioGroup {
 		checkboxes: make([]*checkbox.Model, len(options)),
 		Inputs:     make([]input.Element, len(options)),
 		lastValues: make([]bool, len(options)),
+		value:      "",
 	}
 
 	for i := range options {
@@ -56,9 +57,45 @@ func (g *RadioGroup) Render() string {
 	return strings.Join(parts, "  ")
 }
 
-func (g *RadioGroup) CheckedValue() string {
+func (g *RadioGroup) Value() string {
 	g.sync()
-	return g.Value
+	return g.value
+}
+
+func (g *RadioGroup) SetValue(value string) {
+	if g == nil {
+		return
+	}
+
+	selectedIndex := -1
+	for i, option := range g.Options {
+		if option.Value == value {
+			selectedIndex = i
+			break
+		}
+	}
+
+	for i, box := range g.checkboxes {
+		box.Value = i == selectedIndex && selectedIndex != -1
+		g.lastValues[i] = box.Value
+	}
+
+	if selectedIndex == -1 {
+		g.value = ""
+		return
+	}
+
+	g.value = g.Options[selectedIndex].Value
+}
+
+func (g *RadioGroup) HasValue(value string) bool {
+	for _, option := range g.Options {
+		if option.Value == value {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (g *RadioGroup) sync() {
@@ -80,7 +117,7 @@ func (g *RadioGroup) sync() {
 				box.Value = i == changedIndex
 				g.lastValues[i] = box.Value
 			}
-			g.Value = g.Options[changedIndex].Value
+			g.value = g.Options[changedIndex].Value
 			return
 		}
 
@@ -90,7 +127,7 @@ func (g *RadioGroup) sync() {
 			}
 			g.lastValues[i] = box.Value
 		}
-		g.Value = ""
+		g.value = ""
 		return
 	}
 
@@ -103,9 +140,9 @@ func (g *RadioGroup) sync() {
 	}
 
 	if selectedIndex == -1 {
-		g.Value = ""
+		g.value = ""
 	} else {
-		g.Value = g.Options[selectedIndex].Value
+		g.value = g.Options[selectedIndex].Value
 	}
 
 	for i, box := range g.checkboxes {

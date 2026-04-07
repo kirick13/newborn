@@ -11,24 +11,17 @@ import (
 	"github.com/kirick13/newborn/components/radio_group"
 	input "github.com/kirick13/newborn/elements"
 	checkbox "github.com/kirick13/newborn/elements/checkbox"
+	"github.com/kirick13/newborn/state"
 	"github.com/kirick13/newborn/style"
 )
 
 type SettingsView struct {
 	BaseView
-	previous  *HostsView
+	previous      *HostsView
 	firewallRadio *radio_group.RadioGroup
-	// editIndex int
-	// errorText string
-	// statusText string
-	// checking  bool
-	// spinner   spinner.Model
-	// pending   *state.Host
-	// title     string
 }
 
-// previous *HostsView
-func NewSettingsView() *SettingsView {
+func NewSettingsView(previous *HostsView) *SettingsView {
 	inputs := []input.Element{}
 
 	swapInput := input.New("100M, 2G etc.")
@@ -44,9 +37,20 @@ func NewSettingsView() *SettingsView {
 	inputs = append(inputs, firewallRadio.Inputs...)
 
 	v := &SettingsView{
-		BaseView:  BaseView{},
+		BaseView:      BaseView{},
+		previous:      previous,
 		firewallRadio: firewallRadio,
 	}
+
+	if previous != nil && previous.Display != nil && previous.Display.State() != nil {
+		setup := previous.Display.State().Setup
+		swapInput.SetValue(setup.Swap)
+		diskReserveCheckbox.Value = setup.ReserveFile
+		if firewallRadio.HasValue(setup.FirewallHTTP) {
+			firewallRadio.SetValue(setup.FirewallHTTP)
+		}
+	}
+
 	v.SetInputs(inputs)
 
 	return v
@@ -74,27 +78,12 @@ func (v *SettingsView) Render() string {
 		"",
 		style.FormLabelStyle.Render("allow HTTP(S) traffic from"),
 		v.firewallRadio.Render(),
-		// "",
-		// v.renderField("path to ssh identity file", 4),
 		"",
 		keys.RenderKeys([]keys.Keys{
 			{Key: "esc", Title: "back"},
 			{Key: "enter", Title: "next"},
 		}),
 	}
-
-	// if v.statusText != "" {
-	// 	content = append(content, "", v.statusView())
-	// } else if v.errorText != "" {
-	// 	content = append(content, "", formErrorStyle.Render(v.errorText))
-	// }
-
-	// if !v.checking {
-	// 	content = append(content, "", keys.RenderKeys([]keys.Keys{
-	// 		{Key: "enter", Title: "save"},
-	// 		{Key: "esc", Title: "cancel"},
-	// 	}))
-	// }
 
 	return card.New().
 		Padding(1, 2).
@@ -119,6 +108,13 @@ func (v *SettingsView) OnEnter() tea.Cmd {
 	if v.Display == nil || v.Display.State() == nil {
 		return nil
 	}
+
+	v.Display.State().Setup = state.SetupOptions{
+		Swap:         v.swapValue(),
+		ReserveFile:  v.reserveFileValue(),
+		FirewallHTTP: v.firewallValue(),
+	}
+	v.Display.SetCurrentView(NewSoftwareView(v))
 	return nil
 }
 
@@ -131,4 +127,39 @@ func (v *SettingsView) OnEsc() tea.Cmd {
 
 func (v *SettingsView) OnMsg(msg tea.Msg) tea.Cmd {
 	return nil
+}
+
+func (v *SettingsView) swapValue() string {
+	if len(v.inputs) == 0 {
+		return ""
+	}
+
+	swapInput, ok := v.inputs[0].(*input.Model)
+	if !ok {
+		return ""
+	}
+
+	return strings.TrimSpace(swapInput.Value())
+}
+
+func (v *SettingsView) reserveFileValue() bool {
+	if len(v.inputs) < 2 {
+		return false
+	}
+
+	box, ok := v.inputs[1].(*checkbox.Model)
+	if !ok {
+		return false
+	}
+
+	return box.Value
+}
+
+func (v *SettingsView) firewallValue() string {
+	value := strings.TrimSpace(v.firewallRadio.Value())
+	if value == "" {
+		return "nowhere"
+	}
+
+	return value
 }
