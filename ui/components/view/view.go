@@ -6,6 +6,8 @@ import (
 	"github.com/kirick13/newborn/state"
 )
 
+type QuitNowMsg struct{}
+
 type Display interface {
 	SetCurrentView(View)
 	InnerSize() (int, int)

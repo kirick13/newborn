@@ -147,8 +147,9 @@ func (v *SoftwareView) OnMsg(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case dockerFinishedMsg:
 		if msg.err != nil {
-			provision.ClearTerminal()
-			return tea.Quit
+			return func() tea.Msg {
+				return QuitNowMsg{}
+			}
 		}
 
 		provision.ClearTerminal()

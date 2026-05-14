@@ -45,6 +45,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case view.QuitNowMsg:
+		m.quitting = true
+		return m, tea.Quit
 	case tea.WindowSizeMsg:
 		m.display.UpdateDocumentSize(msg.Width, msg.Height)
 		return m, viewCmd
