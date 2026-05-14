@@ -58,7 +58,7 @@ func createSSHKeyItem(session string, host state.Host) error {
 		"notes":          "",
 		"favorite":       false,
 		"fields": []map[string]any{
-			{"name": "IPv4", "value": host.Connect.IP, "type": 0},
+			{"name": "IP", "value": host.Connect.IP, "type": 0},
 			{"name": "IPv6", "value": "", "type": 0},
 			{"name": "SSH port", "value": fmt.Sprintf("%d", host.Setup.SSHPort), "type": 0},
 			{"name": "hostname", "value": host.Setup.Hostname, "type": 0},

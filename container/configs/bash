@@ -26,3 +26,5 @@ else
 fi
 
 unset MYHOSTNAME
+
+export PATH="/opt/rust-utils:$PATH"

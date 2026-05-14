@@ -100,12 +100,27 @@
           - iptables-persistent
           - cron
           - locales
+          - build-essential
         update_cache: true
         lock_timeout: 600
       register: result_setup_apt_install
       retries: 10
       delay: 10
       until: result_setup_apt_install is not failed
+
+    - name: Setup | Install Rust & Cargo
+      shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
+        curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+    - name: Setup | Install Rust packages
+      shell: |
+        mkdir -p /opt/rust-utils
+        /root/.cargo/bin/cargo binstall --only-signed --disable-telemetry --install-path /opt/rust-utils -y bat bottom du-dust eza fd-find ripgrep
+
+    - name: Setup | Uninstall Rust & Cargo
+      shell: |
+        /root/.cargo/bin/rustup self uninstall -y
 
     - name: Setup | Set password for root
       user:
@@ -377,13 +392,13 @@
       shell: k0s config create > /etc/k0s/k0s.yaml
       when: newborn_k8s_runtime == "k0s"
 
-    # > sudo k0s install controller -c /etc/k0s/k0s.yaml --enable-worker --kubelet-extra-args="--node-ip=10.92.0.2 --address=10.92.0.2" && sudo k0s start
+    # > sudo k0s install controller --config /etc/k0s/k0s.yaml --enable-worker --kubelet-extra-args="--node-ip=10.92.0.2 --address=10.92.0.2" --start
     # > sudo k0s kubeconfig admin > ~/.kube/config
     # > kubectl get nodes -o wide -w
     # > sudo k0s token create --role=worker
     #
     # on worker:
-    # > sudo k0s install worker --token-file .token --kubelet-extra-args="--node-ip=10.92.0.3 --address=10.92.0.3" && sudo k0s start
+    # > sudo k0s install worker --token-file .token --kubelet-extra-args="--node-ip=10.92.0.3 --address=10.92.0.3" --start
 
     # ┌──────────────┐
     # │   MICROK8S   │
