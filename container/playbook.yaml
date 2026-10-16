@@ -108,19 +108,19 @@
       delay: 10
       until: result_setup_apt_install is not failed
 
-    - name: Setup | Install Rust & Cargo
-      shell: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
-        curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+    # - name: Setup | Install Rust & Cargo
+    #   shell: |
+    #     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
+    #     curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
-    - name: Setup | Install Rust packages
-      shell: |
-        mkdir -p /opt/rust-utils
-        /root/.cargo/bin/cargo binstall --only-signed --disable-telemetry --install-path /opt/rust-utils -y bat bottom du-dust eza fd-find ripgrep
+    # - name: Setup | Install Rust packages
+    #   shell: |
+    #     mkdir -p /opt/rust-utils
+    #     /root/.cargo/bin/cargo binstall --only-signed --disable-telemetry --install-path /opt/rust-utils -y bat bottom du-dust eza fd-find ripgrep
 
-    - name: Setup | Uninstall Rust & Cargo
-      shell: |
-        /root/.cargo/bin/rustup self uninstall -y
+    # - name: Setup | Uninstall Rust & Cargo
+    #   shell: |
+    #     /root/.cargo/bin/rustup self uninstall -y
 
     - name: Setup | Set password for root
       user:

@@ -342,6 +342,7 @@ func verifySSH(ip string, port int, password, identityPath string) error {
 	if identityPath != "" {
 		args = append(args,
 			"-o", "BatchMode=yes",
+			"-o", "IdentitiesOnly=yes",
 			"-i", identityPath,
 		)
 	} else {

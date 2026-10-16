@@ -1,6 +1,9 @@
 package view
 
 import (
+	"errors"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -128,7 +131,7 @@ func (v *SoftwareView) OnEnter() tea.Cmd {
 
 	v.Display.State().Software = software
 	v.errorText = ""
-	return tea.ExecProcess(
+	return tea.Exec(
 		buildProvisionCommand(v.Display.State()),
 		func(err error) tea.Msg {
 			return dockerFinishedMsg{err: err}
@@ -187,7 +190,48 @@ func (e errSoftware) Error() string {
 	return string(e)
 }
 
-func buildProvisionCommand(app *state.Newborn) *exec.Cmd {
-	cmd := exec.Command("sh", "-lc", provision.BuildProvisionShellScript(app))
-	return cmd
+type exitOnErrorCommand struct {
+	*exec.Cmd
+}
+
+func (c *exitOnErrorCommand) Run() error {
+	err := c.Cmd.Run()
+	if err == nil {
+		return nil
+	}
+
+	// Bubble Tea has already released the terminal at this point. Exit before
+	// it restores and redraws the UI so the provisioning error remains visible.
+	exitCode := 1
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() >= 0 {
+		exitCode = exitErr.ExitCode()
+	}
+
+	os.Exit(exitCode)
+	return err
+}
+
+func (c *exitOnErrorCommand) SetStdin(stdin io.Reader) {
+	if c.Stdin == nil {
+		c.Stdin = stdin
+	}
+}
+
+func (c *exitOnErrorCommand) SetStdout(stdout io.Writer) {
+	if c.Stdout == nil {
+		c.Stdout = stdout
+	}
+}
+
+func (c *exitOnErrorCommand) SetStderr(stderr io.Writer) {
+	if c.Stderr == nil {
+		c.Stderr = stderr
+	}
+}
+
+func buildProvisionCommand(app *state.Newborn) tea.ExecCommand {
+	return &exitOnErrorCommand{
+		Cmd: exec.Command("sh", "-lc", provision.BuildProvisionShellScript(app)),
+	}
 }
