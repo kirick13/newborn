@@ -1,49 +1,84 @@
 # newborn
 
-Init your newly created Ubuntu webservers in minutes.
+Bootstrap fresh Ubuntu servers through an interactive Go terminal UI and Ansible.
+The target range is Ubuntu 22–26. Newborn is for first setup only; running it on
+existing installations or rerunning it on an already configured server is outside
+the supported workflow.
 
-## What does it do?
+## What it does
 
-- updates the system;
-- adds (or removes) swap;
-- installs Docker/Podman (and compose), k0s/microk8s;
-- creates a new user:
-    - with random password;
-    - with SSH key;
-    - adds sudo access to it;
-- secures SSH:
-    - moves it to random port;
-    - disables password authentication;
-    - disables root login;
-- adds firewall rules;
-- creates unique server's hostname;
-- creates pretty Bash prompt;
-- and many more stuff like UTC timezone and Unicode locale.
+- Updates the system and installs basic packages.
+- Replaces or removes swap, with an optional 2 GB emergency disk reserve.
+- Generates a hostname, user, password, Ed25519 SSH key, and SSH port.
+- Grants sudo access and disables root SSH login and password authentication.
+- Configures IPv4/IPv6 firewall rules, with optional public or Cloudflare-only HTTP(S).
+- Optionally installs Docker or Podman, Compose, k0s or MicroK8s, and removes Snap.
+- Sets UTC time, a UTF-8 locale, a custom Bash prompt, and Ghostty terminfo.
+- Saves each server's generated SSH key and credentials to Bitwarden.
 
-## Usage
+The k0s option installs the binary and generates configuration; controller/worker
+startup and cluster joining remain manual.
 
-### Install Bun
+## Requirements
 
-```sh
-curl -fsSL https://bun.sh/install | bash
-```
+- Go 1.25 or newer, subject to dependency requirements in `go.mod`.
+- Docker CLI and a running Docker engine, reachable from the local shell.
+- OpenSSH client (`ssh`).
+- Bitwarden CLI (`bw`), already logged in to your account.
+- A fresh Ubuntu server reachable as root using a password or SSH identity file.
 
-### Clone this repository
+Bitwarden is mandatory. Other password managers and saving credentials to a local
+directory are possible future options, not implemented modes.
 
-```sh
-git clone https://github.com/kirick13/newborn.git
-cd newborn
-```
+## Run
 
-### Run it!
+From the repository root:
 
 ```sh
-bun run newborn.ts
+go run .
 ```
 
-CLI will interactively ask you to provide connection options and setup/software options.
+Add hosts, choose setup and software options, and continue to provisioning.
+The app builds `local/newborn` from `container/`, then runs Ansible in that image.
+After successful provisioning, it asks for your Bitwarden master password and
+saves one SSH-key item per host.
 
-## TODO
+Use Tab/Shift+Tab to move between controls, Space to toggle options, Enter to
+continue, and Esc to go back where available. Ctrl+C quits the application.
 
-- save details about new servers to Bitwarden (SSH key, IP, SSH port, username and password);
-  - same for 1Password.
+An optional root `.env` file supplies host-form defaults. Use plain, unquoted
+values:
+
+```dotenv
+NAME=test-server
+IP=192.0.2.10
+SSH_KEY_PATH=/absolute/path/to/bootstrap-key
+```
+
+Generated private keys currently remain in memory until the Bitwarden save
+succeeds. Finish that step before exiting; there is no local key-file fallback.
+
+## Layout
+
+- `main.go`, `go.mod`, `go.sum`: entry point and Go module configuration.
+- `ui/`: application, terminal components, state, defaults, and provisioning helpers.
+- `container/`: Ansible image, playbook, target configuration, and shell scripts.
+- `AGENTS.md`: project decisions and guidance for future changes.
+- `docs/testing.md`: local checks and the proposed fresh-VM testing workflow.
+
+## Development checks
+
+Run from the repository root:
+
+```sh
+go build ./...
+go test ./...
+go vet ./...
+bash -n container/scripts/swap.sh
+sh -n container/scripts/iptables.sh
+sh -n container/scripts/remove_snap.sh
+```
+
+Use `gofmt` on changed Go files. There are currently no automated test cases;
+`go test ./...` checks package compilation but does not validate server setup.
+See [the testing plan](docs/testing.md) for how to test real provisioning.

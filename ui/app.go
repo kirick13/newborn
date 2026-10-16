@@ -1,29 +1,27 @@
-package main
+package ui
 
 import (
-	"log"
-
 	tea "charm.land/bubbletea/v2"
-	"github.com/kirick13/newborn/components"
-	view "github.com/kirick13/newborn/components/view"
+	"github.com/kirick13/newborn/ui/components"
+	view "github.com/kirick13/newborn/ui/components/view"
 )
 
-func main() {
+// Run starts the interactive terminal application.
+func Run() error {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
-	}
+	_, err := p.Run()
+	return err
 }
 
 type model struct {
-	display           *components.Display
-	quitting          bool
+	display  *components.Display
+	quitting bool
 	// clearOnNextRender bool
 }
 
 func initialModel() model {
 	return model{
-		display:           components.NewDisplay(),
+		display: components.NewDisplay(),
 		// clearOnNextRender: true,
 	}
 }

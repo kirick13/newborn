@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	checkbox "github.com/kirick13/newborn/elements/checkbox"
-	input "github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/style"
+	input "github.com/kirick13/newborn/ui/elements"
+	checkbox "github.com/kirick13/newborn/ui/elements/checkbox"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type Option struct {

@@ -7,16 +7,16 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	card "github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
-	"github.com/kirick13/newborn/provision"
-	"github.com/kirick13/newborn/state"
-	"github.com/kirick13/newborn/style"
+	card "github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
+	"github.com/kirick13/newborn/ui/provision"
+	"github.com/kirick13/newborn/ui/state"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type HostsView struct {
 	BaseView
-	table table.Model
+	table     table.Model
 	errorText string
 }
 
@@ -29,14 +29,14 @@ var (
 			Foreground(lipgloss.Color("#737373"))
 
 	hostsHeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#d4d4d4"))
+				Bold(true).
+				Foreground(lipgloss.Color("#d4d4d4"))
 
 	hostsCellStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#e5e5e5"))
 
 	hostsDividerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#525252"))
+				Foreground(lipgloss.Color("#525252"))
 )
 
 func NewHostsView() *HostsView {

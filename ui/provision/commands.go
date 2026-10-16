@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/ui/state"
 )
 
 func BuildDockerRunCommand(app *state.Newborn) string {

@@ -6,14 +6,14 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
-	"github.com/kirick13/newborn/components/radio_group"
-	"github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/elements/input"
-	"github.com/kirick13/newborn/elements/checkbox"
-	"github.com/kirick13/newborn/state"
-	"github.com/kirick13/newborn/style"
+	"github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
+	"github.com/kirick13/newborn/ui/components/radio_group"
+	"github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/elements/checkbox"
+	"github.com/kirick13/newborn/ui/elements/input"
+	"github.com/kirick13/newborn/ui/state"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type SettingsView struct {

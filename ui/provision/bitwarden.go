@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/ui/state"
 	"golang.org/x/crypto/ssh"
 )
 

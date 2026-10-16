@@ -2,8 +2,8 @@ package view
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/state"
 )
 
 type QuitNowMsg struct{}
@@ -32,12 +32,12 @@ type BaseView struct {
 	focused int
 }
 
-func (v BaseView) OnEnter() tea.Cmd { return nil }
-func (v BaseView) OnEsc() tea.Cmd { return nil }
-func (v BaseView) OnKey(string) tea.Cmd { return nil }
-func (v BaseView) OnMsg(tea.Msg) tea.Cmd { return nil }
+func (v BaseView) OnEnter() tea.Cmd           { return nil }
+func (v BaseView) OnEsc() tea.Cmd             { return nil }
+func (v BaseView) OnKey(string) tea.Cmd       { return nil }
+func (v BaseView) OnMsg(tea.Msg) tea.Cmd      { return nil }
 func (v BaseView) Inputs() []elements.Element { return v.inputs }
-func (v BaseView) FocusedInput() int { return v.focused }
+func (v BaseView) FocusedInput() int          { return v.focused }
 
 func (v *BaseView) SetDisplay(display Display) {
 	v.Display = display

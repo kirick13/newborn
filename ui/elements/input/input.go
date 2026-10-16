@@ -6,9 +6,9 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/style"
 	"github.com/rivo/uniseg"
-	"github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/style"
 )
 
 var (
@@ -58,7 +58,7 @@ func (m *Model) Render() string {
 		content = m.maskedValue(value)
 	}
 
-	content = trimToWidth(content, m.Width() + 1)
+	content = trimToWidth(content, m.Width()+1)
 	content = contentStyle.Width(m.Width() + 1).MaxWidth(m.Width() + 1).Render(content)
 
 	return content

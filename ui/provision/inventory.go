@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kirick13/newborn/state"
+	"github.com/kirick13/newborn/ui/state"
 )
 
 func BuildInventory(hosts []state.Host) string {

@@ -4,19 +4,19 @@ import (
 	"fmt"
 
 	tea "charm.land/bubbletea/v2"
-	input "github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/style"
+	input "github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type Model struct {
-	Value bool
+	Value  bool
 	Symbol string
-	focus bool
+	focus  bool
 }
 
 func New() *Model {
 	return &Model{
-		Value: false,
+		Value:  false,
 		Symbol: "v",
 	}
 }

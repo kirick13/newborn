@@ -5,8 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	card "github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
+	card "github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
 )
 
 type ConfirmView struct {
@@ -22,7 +22,7 @@ var (
 				Bold(true).
 				Foreground(lipgloss.Color("#f5f5f5"))
 	confirmBodyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#d4d4d4"))
+				Foreground(lipgloss.Color("#d4d4d4"))
 )
 
 func NewConfirmView(title, question string, previous View, onConfirm func()) *ConfirmView {

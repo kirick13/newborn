@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	card "github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
-	"github.com/kirick13/newborn/style"
+	card "github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type TextView struct {

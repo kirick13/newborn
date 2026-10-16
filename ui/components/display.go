@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/term"
 	"github.com/charmbracelet/x/exp/charmtone"
-	view "github.com/kirick13/newborn/components/view"
-	"github.com/kirick13/newborn/state"
+	"github.com/charmbracelet/x/term"
+	view "github.com/kirick13/newborn/ui/components/view"
+	"github.com/kirick13/newborn/ui/state"
 )
 
 // hasDarkBG = lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
@@ -24,10 +24,10 @@ type Display struct {
 var physicalWidth, physicalHeight, _ = term.GetSize(os.Stdout.Fd())
 
 var bgStyle = lipgloss.NewStyle().
-		Foreground(charmtone.Iron).
-		Height(physicalHeight).
-		Width(physicalWidth).
-		Align(lipgloss.Center)
+	Foreground(charmtone.Iron).
+	Height(physicalHeight).
+	Width(physicalWidth).
+	Align(lipgloss.Center)
 var bgString = makeBg()
 
 func NewDisplay() *Display {
@@ -134,7 +134,7 @@ func makeBg() string {
 		for range physicalWidth {
 			b.WriteString("⠪")
 		}
-		if i < physicalHeight - 1 {
+		if i < physicalHeight-1 {
 			b.WriteString("\n")
 		}
 	}

@@ -17,26 +17,26 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	card "github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
-	"github.com/kirick13/newborn/config"
-	"github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/elements/input"
-	"github.com/kirick13/newborn/state"
-	"github.com/kirick13/newborn/style"
+	card "github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
+	"github.com/kirick13/newborn/ui/config"
+	"github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/elements/input"
+	"github.com/kirick13/newborn/ui/state"
+	"github.com/kirick13/newborn/ui/style"
 	"golang.org/x/crypto/ssh"
 )
 
 type HostFormView struct {
 	BaseView
-	previous  *HostsView
-	editIndex int
-	errorText string
+	previous   *HostsView
+	editIndex  int
+	errorText  string
 	statusText string
-	checking  bool
-	spinner   spinner.Model
-	pending   *state.Host
-	title     string
+	checking   bool
+	spinner    spinner.Model
+	pending    *state.Host
+	title      string
 }
 
 type sshCheckResultMsg struct {
@@ -438,12 +438,12 @@ func shellQuote(value string) string {
 
 func generateHostSetup(displayName string) (state.HostSetup, error) {
 	setup := state.HostSetup{
-		Hostname:      "host-" + randomString(8, lowerAlphaNumeric),
-		Name:          displayName,
-		Username:      randomString(7, lowerAlphaNumeric),
-		Password:      randomString(100, alphaNumeric),
-		PasswordSalt:  randomString(16, alphaNumeric),
-		SSHPort:       randomInt(1025, 65535),
+		Hostname:     "host-" + randomString(8, lowerAlphaNumeric),
+		Name:         displayName,
+		Username:     randomString(7, lowerAlphaNumeric),
+		Password:     randomString(100, alphaNumeric),
+		PasswordSalt: randomString(16, alphaNumeric),
+		SSHPort:      randomInt(1025, 65535),
 	}
 
 	privateKey, publicKey, err := generateSSHKeyPair()

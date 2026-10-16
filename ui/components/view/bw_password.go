@@ -7,13 +7,13 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	card "github.com/kirick13/newborn/components/card"
-	"github.com/kirick13/newborn/components/keys"
-	"github.com/kirick13/newborn/elements"
-	"github.com/kirick13/newborn/elements/input"
-	"github.com/kirick13/newborn/provision"
-	"github.com/kirick13/newborn/state"
-	"github.com/kirick13/newborn/style"
+	card "github.com/kirick13/newborn/ui/components/card"
+	"github.com/kirick13/newborn/ui/components/keys"
+	"github.com/kirick13/newborn/ui/elements"
+	"github.com/kirick13/newborn/ui/elements/input"
+	"github.com/kirick13/newborn/ui/provision"
+	"github.com/kirick13/newborn/ui/state"
+	"github.com/kirick13/newborn/ui/style"
 )
 
 type BwPasswordView struct {
