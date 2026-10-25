@@ -1,13 +1,17 @@
 # newborn
 
 Bootstrap fresh Ubuntu servers through an interactive Go terminal UI and Ansible.
-The target range is Ubuntu 22–26. Newborn is for first setup only; running it on
-existing installations or rerunning it on an already configured server is outside
-the supported workflow.
+The targets are Ubuntu 22–26 on AMD64 and ARM64. Newborn is for first setup only;
+running it on existing installations or rerunning it on an already configured
+server is outside the supported workflow.
 
 ## What it does
 
 - Updates the system and installs basic packages.
+- Installs bat, bottom, dust, eza, fd, and ripgrep through Mise into `/usr/local/bin`.
+- Checks Ubuntu repository URLs concurrently and replaces source files containing
+  unreachable URLs with official sources. Uses a long APT lock timeout for the
+  initial update.
 - Replaces or removes swap, with an optional 2 GB emergency disk reserve.
 - Generates a hostname, user, password, Ed25519 SSH key, and SSH port.
 - Grants sudo access and disables root SSH login and password authentication.
@@ -79,6 +83,7 @@ sh -n container/scripts/iptables.sh
 sh -n container/scripts/remove_snap.sh
 ```
 
-Use `gofmt` on changed Go files. There are currently no automated test cases;
+Use `gofmt` on changed Go files. There are currently no Go test cases;
 `go test ./...` checks package compilation but does not validate server setup.
-See [the testing plan](docs/testing.md) for how to test real provisioning.
+See [the testing guide](docs/testing.md) for offline platform/source tests and the
+plan for testing real provisioning.

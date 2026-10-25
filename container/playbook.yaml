@@ -2,12 +2,37 @@
 
 - hosts: all
 
+  vars:
+    newborn_compose_version: "v5.0.2"
+
+    # Ansible machine names -> Debian package architecture names.
+    newborn_apt_arch:
+      x86_64: amd64
+      aarch64: arm64
+
+    # Ansible machine names -> Docker Compose release filename suffixes.
+    newborn_compose_arch:
+      x86_64: x86_64
+      aarch64: aarch64
+
   tasks:
 
-    # Variables from facts gathering such as "ansible_machine", "ansible_architecture" or "ansible_userspace_architecture" are wrong about "amd64" architecture, they state that this is an "x86_64"
-    - name: Get architecture of target node
-      shell: dpkg --print-architecture
-      register: newborn_arch
+    - name: Validate supported Ubuntu target
+      assert:
+        that:
+          - ansible_distribution == 'Ubuntu'
+          - ansible_distribution_major_version | int >= 22
+          - ansible_distribution_major_version | int <= 26
+          - ansible_distribution_release is match('^[a-z][a-z0-9]+$')
+          - ansible_architecture in newborn_apt_arch
+        fail_msg: Newborn requires Ubuntu 22–26 on AMD64 (x86_64) or ARM64 (aarch64).
+
+    - name: Validate Docker Compose architecture
+      assert:
+        that:
+          - ansible_architecture in newborn_compose_arch
+        fail_msg: "Docker Compose {{ newborn_compose_version }} has no binary for {{ ansible_architecture }}."
+      when: newborn_oci_runtime == 'docker' and newborn_oci_compose == 'y'
 
     # ┌─────────────┐
     # │   GHOSTTY   │
@@ -79,14 +104,27 @@
       delay: 30
       until: result_setup_timezone is not failed
 
+    - name: Setup | Check and repair Ubuntu repositories
+      script:
+        cmd: >-
+          scripts/apt_sources.py
+          --codename {{ ansible_distribution_release | quote }}
+          --architecture {{ newborn_apt_arch[ansible_architecture] | quote }}
+        executable: /usr/bin/python3
+      register: newborn_apt_sources_result
+      changed_when: >-
+        newborn_apt_sources_result.rc == 0 and
+        (newborn_apt_sources_result.stdout | from_json).changed
+
     - name: Setup | Update system
       apt:
         update_cache: true
         upgrade: dist
         autoremove: true
-        lock_timeout: 600
+        lock_timeout: 7200
+        update_cache_retries: 1
       register: result_setup_apt_upgrade
-      retries: 10
+      retries: 2
       delay: 10
       until: result_setup_apt_upgrade is not failed
 
@@ -101,6 +139,7 @@
           - cron
           - locales
           - build-essential
+          - extrepo
         update_cache: true
         lock_timeout: 600
       register: result_setup_apt_install
@@ -108,19 +147,28 @@
       delay: 10
       until: result_setup_apt_install is not failed
 
-    # - name: Setup | Install Rust & Cargo
-    #   shell: |
-    #     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
-    #     curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+    - name: Setup | Enable Mise repository
+      command: extrepo enable mise
 
-    # - name: Setup | Install Rust packages
-    #   shell: |
-    #     mkdir -p /opt/rust-utils
-    #     /root/.cargo/bin/cargo binstall --only-signed --disable-telemetry --install-path /opt/rust-utils -y bat bottom du-dust eza fd-find ripgrep
+    - name: Setup | Install Mise
+      apt:
+        name: mise
+        update_cache: true
+        lock_timeout: 600
 
-    # - name: Setup | Uninstall Rust & Cargo
-    #   shell: |
-    #     /root/.cargo/bin/rustup self uninstall -y
+    - name: Setup | Install CLI tools
+      shell: |
+        set -e
+        mise use -g github:sharkdp/bat \
+                    github:ClementTsang/bottom \
+                    github:bootandy/dust \
+                    github:eza-community/eza \
+                    github:sharkdp/fd \
+                    github:BurntSushi/ripgrep
+        for bin in bat btm dust eza fd rg; do
+          binary_path="$(mise which "$bin")"
+          install -m 755 "$binary_path" "/usr/local/bin/$bin"
+        done
 
     - name: Setup | Set password for root
       user:
@@ -305,7 +353,8 @@
 
     - name: Docker | Add repository
       apt_repository:
-        repo: "deb [arch={{ newborn_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        filename: docker
+        repo: "deb [arch={{ newborn_apt_arch[ansible_architecture] }} signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         update_cache: yes
       when: newborn_oci_runtime == "docker"
 
@@ -338,7 +387,7 @@
 
     - name: Docker | Install Compose
       get_url:
-        url: "https://github.com/docker/compose/releases/download/v5.0.2/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+        url: "https://github.com/docker/compose/releases/download/{{ newborn_compose_version }}/docker-compose-linux-{{ newborn_compose_arch[ansible_architecture] }}"
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: '0755'
       when: newborn_oci_runtime == "docker" and newborn_oci_compose == "y"

@@ -1,13 +1,63 @@
 # Testing Newborn
 
-The project currently has no automated test cases or VM test harness. This document
-describes the recommended next step; it does not claim that Ubuntu compatibility
-has been verified.
+The project has offline platform/source and CLI installer tests, but no Go test
+cases or VM test harness. This document also describes the recommended VM workflow;
+it does not claim that Ubuntu compatibility has been verified.
 
 ## Fast checks
 
 Run the commands in the README from the repository root. They check compilation,
 Go diagnostics, and shell syntax without contacting a server or a vault.
+
+Run the offline regression suites with the same Ansible image used by the application:
+
+```sh
+docker build -t local/newborn container
+docker run --rm --network none -v "$PWD:/workspace:ro" -w /workspace \
+  --entrypoint python3 local/newborn -m unittest discover -s tests -v
+```
+
+The suite checks early platform validation and the two mappings from
+`ansible_architecture`: Debian names for Ubuntu/Docker APT sources, and release
+filename suffixes for Docker Compose. A loopback HTTP server exercises concurrent
+repository checks, redirects, HTTP errors,
+timeouts, the overall deadline, and connection failures. Temporary source files
+cover both formats, healthy-file preservation, ignored comments/disabled entries,
+and replacements for Jammy, Noble, and Resolute on AMD64 and ARM64 without backups.
+It does not run APT, contact external servers, or verify lock waiting or package
+installation on those Ubuntu releases.
+
+The CLI suite executes the installation shell with stubbed `mise` and `install`
+commands. It checks that failed downloads, executable lookups, and copies stop
+the task, and that a successful run copies all six tools. It does not download
+release binaries or verify their compatibility with Ubuntu.
+
+APT operations use the built-in module directly. The initial update/upgrade has
+`lock_timeout: 7200`, two task retries, and one cache refresh attempt per run.
+In the pinned Ansible 2.17 runner, this timeout handles python-apt lock exceptions;
+it does not cover all lock failures from apt-get subprocesses. Validate the actual
+fresh-server lock scenario in a VM. Later APT tasks retain their original settings.
+
+Before updating, active HTTP/HTTPS repository URLs are read from `/etc/apt/sources.list`
+and `/etc/apt/sources.list.d/ubuntu.sources`, if present. The self-contained
+`container/scripts/apt_sources.py` uses only Python 3's standard library, including
+the builders for both source formats. Ansible's `script` module stages it
+temporarily and executes it with `/usr/bin/python3`, just as `remove_snap.sh` is
+staged for execution; there is no permanent script copy on the target.
+
+Every distinct URL is checked concurrently from the target using GET, following
+redirects, with a 15-second socket timeout and a 30-second deadline for the checks.
+Worker processes are terminated at the deadline even if DNS resolution stalls.
+A non-2xx response, timeout, or connection/TLS error triggers replacement of the
+containing file with official Ubuntu sources in the same format. No backup is
+created. Healthy files, comments, disabled entries, and other repository files such
+as `docker.list` are left alone unless they belong to a file being replaced.
+Missing files and files without active HTTP/HTTPS URLs are left alone.
+
+These checks test the configured base URLs, not package indexes or signatures.
+A responsive URL does not prove that its repository is usable by APT; conversely,
+a mirror denying directory access can fail this check even if APT indexes work.
+APT remains responsible for validating repository metadata during the update.
 
 Useful future unit tests cover behavior at the external boundaries: escaped values
 in inventory, shell arguments containing spaces and quotes, conflicting software
@@ -64,7 +114,7 @@ manage/reboot/delete the VM afterward; retain a hypervisor-side recovery path.
 Start with a minimal setup scenario on Ubuntu 22.04, 24.04, and 26.04, then add
 separate fresh-VM scenarios for Docker + Compose, Podman + Compose, Snap removal,
 swap/reserve options, and the Kubernetes installers. The product target remains
-Ubuntu 22–26; coverage of interim releases has not yet been decided.
+Ubuntu 22–26 on AMD64 and ARM64; coverage of interim releases has not yet been decided.
 
 Run firewall checks for each HTTP policy. Local private-network traffic is allowed
 by the current script, so successful access from the developer machine does not
@@ -77,7 +127,7 @@ each Ubuntu image: the Ansible image is currently pinned to ansible-core 2.17.0.
 Treat that compatibility as unverified until provisioning has actually passed.
 
 Apple Silicon VM runs cover ARM64. Add a Linux x86_64 VM runner or disposable cloud
-instances if AMD64 coverage is required. Confirm Docker-to-VM routing on the local
+instances for AMD64 coverage. Confirm Docker-to-VM routing on the local
 host before relying on the laptop workflow; a Linux VM host is an alternative if
 the local Docker and Multipass networks cannot communicate.
 
