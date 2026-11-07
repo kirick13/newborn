@@ -1,8 +1,8 @@
 # Testing Newborn
 
-The project has offline platform/source and CLI installer tests, but no Go test
-cases or VM test harness. This document also describes the recommended VM workflow;
-it does not claim that Ubuntu compatibility has been verified.
+The project has offline platform/source, CLI installer, and firewall script tests,
+but no Go test cases or VM test harness. This document also describes the recommended
+VM workflow; it does not claim that Ubuntu compatibility has been verified.
 
 ## Fast checks
 
@@ -31,6 +31,15 @@ The CLI suite executes the installation shell with stubbed `mise` and `install`
 commands. It checks that failed downloads, executable lookups, and copies stop
 the task, and that a successful run copies all six tools. It does not download
 release binaries or verify their compatibility with Ubuntu.
+
+The firewall suite runs `container/scripts/iptables.sh` with each HTTP mode set by
+the playbook's task and stubbed `iptables`, `ip6tables`, restore/save commands, and `curl`.
+It checks that each family is loaded with one `iptables-restore --noflush` before
+the chain is linked, that ports are matched by their pre-DNAT conntrack value, that
+a failed download reapplies the loaded Cloudflare ranges with the current SSH port (or,
+with nothing loaded yet, changes nothing), that a failed restore saves nothing, and
+that the playbook allows the new SSH port before restarting sshd. It does not load
+rules into a kernel or test Docker traffic.
 
 APT operations use the built-in module directly. The initial update/upgrade has
 `lock_timeout: 7200`, two task retries, and one cache refresh attempt per run.

@@ -65,6 +65,18 @@
 - Local Docker is required even when the target does not install Docker.
 - Ansible changes root credentials, creates a sudo user, disables root SSH and
   password authentication, changes the SSH port, and replaces firewall rules.
+- `iptables.sh` writes the `NEWBORN` chain to temporary files and loads each family
+  with one `iptables-restore --noflush`, so the firewall is never briefly open and a
+  failure keeps the current rules. A failed Cloudflare download reapplies the ranges
+  already loaded, so the SSH rule still updates; only the first run, before SSH changes,
+  can fail on it. The playbook applies the new SSH port before restarting sshd. Jumps
+  are inserted only when missing and never moved back to the top; conflicts with other
+  firewall software are the user's responsibility. Match ports with
+  `-m conntrack --ctorigdstport`, not `--dport`: Docker's DNAT rewrites ports before
+  `FORWARD`/`DOCKER-USER`. Allow
+  rules use `RETURN`, not `ACCEPT`. The playbook sets `newborn_firewall_http` as the
+  argument of the `allow_http '<mode>'` call; `nowhere` falls to the default case
+  and opens no HTTP ports.
 - After provisioning succeeds, the UI unlocks Bitwarden and saves an SSH-key item
   per host. The account must already be logged in through `bw`.
 - Generated private keys currently remain in memory until Bitwarden saves them.
@@ -96,8 +108,9 @@ sh -n container/scripts/remove_snap.sh
 
 - Format changed Go files with `gofmt`.
 - Offline platform/source regression tests live in `tests/test_apt.py`; CLI shell
-  failure handling is covered by `tests/test_cli_tools.py` using stubbed commands.
-  Run both in the Ansible Docker image; see `docs/testing.md` for the command.
+  failure handling is covered by `tests/test_cli_tools.py` and firewall rule loading
+  by `tests/test_iptables.py`, both using stubbed commands. Run them in the Ansible
+  Docker image; see `docs/testing.md` for the command.
   There are no Go test cases or CI configuration. `go test ./...` alone does not
   establish that provisioning works.
 - For meaningful Go tests, prioritize inventory serialization, command quoting,

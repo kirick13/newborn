@@ -175,6 +175,15 @@
         name: root
         password: "{{ newborn_password | password_hash('sha512', newborn_password_salt) }}"
 
+    - name: Setup | Hide sudo password length
+      copy:
+        content: "Defaults !pwfeedback\n"
+        dest: /etc/sudoers.d/no-pwfeedback
+        owner: root
+        group: root
+        mode: '0440'
+        validate: visudo -cf %s
+
     - name: Setup | Set hostname
       hostname:
         name: "{{ newborn_hostname }}"
@@ -212,41 +221,13 @@
     - name: Firewall | Disable ufw
       shell: /root/newborn/iptables.sh remove_ufw
 
-    - name: Firewall | Update script
-      blockinfile:
+    - name: Firewall | Set HTTP access in script
+      lineinfile:
         path: /root/newborn/iptables.sh
-        block: |
-          {% filter indent(width=4, first=true) %}
-          # Allow access to ports 80 and 443 from Cloudflare
-          CF_IP_RANGES_V4=$(curl -Ls https://www.cloudflare.com/ips-v4)
-          for ip in ${CF_IP_RANGES_V4}
-          do
-              iptables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-              iptables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-          done
-          CF_IP_RANGES_V6=$(curl -Ls https://www.cloudflare.com/ips-v6)
-          for ip in ${CF_IP_RANGES_V6}
-          do
-              ip6tables -A $CHAIN -p tcp -s $ip --dport 80  -m comment --comment 'Cloudflare' -j RETURN
-              ip6tables -A $CHAIN -p tcp -s $ip --dport 443 -m comment --comment 'Cloudflare' -j RETURN
-          done
-          {% endfilter %}
-        marker: "    # {mark} ANSIBLE MANAGED BLOCK : HTTP"
-        state: present
-      when: newborn_firewall_http == 'cloudflare'
-
-    - name: Firewall | Update script
-      blockinfile:
-        path: /root/newborn/iptables.sh
-        block: |
-          {% filter indent(width=4, first=true) %}
-          # Allow access to ports 80 and 443
-          call_iptables -A $CHAIN -p tcp --dport 80 -j ACCEPT
-          call_iptables -A $CHAIN -p tcp --dport 443 -j ACCEPT
-          {% endfilter %}
-        marker: "    # {mark} ANSIBLE MANAGED BLOCK : HTTP"
-        state: present
-      when: newborn_firewall_http == 'anywhere'
+        # backrefs leaves the file unchanged instead of appending if the call is missing
+        regexp: "^(\\s*)allow_http '"
+        line: "\\1allow_http '{{ newborn_firewall_http }}'"
+        backrefs: true
 
     - name: Firewall | Execute the script
       shell: /root/newborn/iptables.sh
@@ -258,13 +239,6 @@
         minute: '{{ 59 | random }}'
         hour: '{{ 23 | random }}'
         job: '/root/newborn/iptables.sh >/dev/null 2>&1'
-
-    - name: Firewall | Create a cron job to fix rules
-      cron:
-        name: Lookup iptables rules and fix if needed
-        user: root
-        minute: '*/5'
-        job: '/root/newborn/iptables.sh fix >/dev/null 2>&1'
 
     # ┌──────────┐
     # │   BASH   │
@@ -556,11 +530,12 @@
         regexp: '^Port '
         line: "Port {{ newborn_ssh_port }}"
 
+    # Open the new port before sshd moves to it: if this fails, sshd stays on the allowed old port
+    - name: OpenSSH | Execute the iptables script to reflect changes in SSH port
+      shell: /root/newborn/iptables.sh
+
     - name: OpenSSH | Restart server
       systemd_service:
         name: ssh
         state: restarted
         daemon_reload: true
-
-    - name: OpenSSH | Execute the iptables script to reflect changes in SSH port
-      shell: /root/newborn/iptables.sh
